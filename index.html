@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>BrewStation</title>
+
+<style>
+:root {
+  --green:#00ff66;
+  --bg:#020402;
+  --border:#0a3f1e;
+}
+
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--green);
+  font-family:Courier New, monospace;
+}
+
+header, footer {
+  padding:14px;
+  text-align:center;
+  border-bottom:1px solid var(--border);
+}
+
+main {
+  max-width:900px;
+  margin:auto;
+  padding:14px;
+}
+
+.post {
+  border:1px solid var(--border);
+  padding:10px;
+  margin-bottom:12px;
+  background:rgba(0,255,102,.03);
+}
+
+.author {
+  font-size:12px;
+  margin-bottom:4px;
+}
+
+.badge {
+  border:1px solid currentColor;
+  padding:1px 5px;
+  font-size:11px;
+  margin-left:6px;
+}
+
+.role {
+  color:#66ccff;
+}
+
+button {
+  background:none;
+  color:var(--green);
+  border:1px solid var(--green);
+  padding:6px 12px;
+  cursor:pointer;
+}
+
+button:hover {
+  box-shadow:0 0 6px var(--green);
+}
+
+@media(max-width:600px){
+  body{font-size:14px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>BrewStation</h1>
+</header>
+
+<main>
+
+<section>
+  <h2>📜 Forum Brews</h2>
+  <div id="posts">Loading discussions…</div>
+</section>
+
+<section>
+  <h2>New Brew</h2>
+  <p>
+    Posting requires GitHub login.<br>
+    Anonymous posts appear as <b>Anonymous</b>.
+  </p>
+  <button onclick="alert('Posting handled server-side via GitHub OAuth')">
+    Post Brew
+  </button>
+</section>
+
+</main>
+
+<footer>
+  BrewStation © 2026 - 2026
+</footer>
+
+<script>
+/* CONFIG */
+const OWNER = "OWNER_NAME";
+const REPO  = "REPO_NAME";
+
+/* Load roles */
+let ROLE_DATA = {};
+fetch("roles.json")
+  .then(r=>r.json())
+  .then(j=>ROLE_DATA=j);
+
+/* Detect console */
+function consoleTag(){
+  const ua=navigator.userAgent;
+  if(/Vita/i.test(ua)) return "PS Vita";
+  if(/PSP/i.test(ua)) return "PSP";
+  if(/PlayStation 3/i.test(ua)) return "PS3";
+  if(/PlayStation 4/i.test(ua)) return "PS4";
+  if(/PlayStation 5/i.test(ua)) return "PS5";
+  return "PC/Mobile";
+}
+
+/* Fetch GitHub Discussions (public, read-only) */
+fetch(`https://api.github.com/repos/${OWNER}/${REPO}/discussions`)
+.then(r=>r.json())
+.then(data=>{
+  const box=document.getElementById("posts");
+  box.innerHTML="";
+  data.forEach(d=>{
+    const author=d.user?.login || "Anonymous";
+    const roles=(ROLE_DATA.members?.[author]||[])
+      .map(r=>`<span class="badge role">${r}</span>`).join("");
+
+    const div=document.createElement("div");
+    div.className="post";
+    div.innerHTML=`
+      <div class="author">
+        ${author} [${consoleTag()}] ${roles}
+      </div>
+      <strong>${d.title}</strong>
+      <p>${d.body?.substring(0,300)||""}</p>
+      <a href="${d.html_url}" target="_blank">Open Discussion</a>
+    `;
+    box.appendChild(div);
+  });
+})
+.catch(()=>{
+  document.getElementById("posts").textContent =
+    "Failed to load discussions.";
+});
+</script>
+
+</body>
+</html>
