@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
 <title>BrewStation</title>
 
 <style>
@@ -81,11 +80,13 @@ button:hover {
 
 <main>
 
+<!-- Existing forum posts -->
 <section>
   <h2>📜 Forum Brews</h2>
   <div id="posts">Loading discussions…</div>
 </section>
 
+<!-- New post button -->
 <section>
   <h2>New Brew</h2>
   <p>
@@ -97,16 +98,39 @@ button:hover {
   </button>
 </section>
 
+<!-- Giscus discussion section -->
+<section>
+  <h2>💬 Community Discussion</h2>
+  <div id="giscus_container" style="max-width:900px; margin:auto;"></div>
+
+  <script src="https://giscus.app/client.js"
+          data-repo="GoldenFieldsPS3/brewstation.github.io"
+          data-repo-id="R_kgDORLAr5g"
+          data-category="Announcements"
+          data-category-id="DIC_kwDORLAr5s4C2BV8"
+          data-mapping="specific"
+          data-term="PS1, PS2, PSP, PS3, PSV, PS4, PS5"
+          data-strict="1"
+          data-reactions-enabled="1"
+          data-emit-metadata="0"
+          data-input-position="bottom"
+          data-theme="dark"
+          data-lang="en"
+          crossorigin="anonymous"
+          async>
+  </script>
+</section>
+
 </main>
 
 <footer>
-  BrewStation © 2026 - 2026
+  BrewStation © 2026
 </footer>
 
 <script>
 /* CONFIG */
-const OWNER = "OWNER_NAME";
-const REPO  = "REPO_NAME";
+const OWNER = "OWNER_NAME";  // replace with your GitHub username
+const REPO  = "REPO_NAME";   // replace with your GitHub repo name
 
 /* Load roles */
 let ROLE_DATA = {};
