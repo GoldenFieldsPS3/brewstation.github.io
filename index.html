@@ -1,661 +1,248 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>BrewStation — PlayStation Homebrew & Modding Hub</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BrewStation – PlayStation homebrew and modding hub</title>
 <style>
-:root {
-  --green: #00ff66;
-  --bg: #020402;
-  --bg-sidebar: #050b05;
-  --bg-card: #040d06;
-  --border: #0a3f1e;
-  --border-glow: rgba(0, 255, 102, 0.4);
+:root{--g:#00ff66;--bg:#020402;--side:#050b05;--card:#040d06;--bd:#0a3f1e;--dim:#1fa85a;--on:#000;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root[data-theme="amber"]{--g:#ffb000;--bg:#040300;--side:#0b0800;--card:#0a0700;--bd:#4a3300;--dim:#b07a00}
+:root[data-theme="blue"]{--g:#4fc3ff;--bg:#02060a;--side:#050c12;--card:#040a10;--bd:#0d3550;--dim:#2a8abf}
+:root[data-theme="purple"]{--g:#c792ff;--bg:#06030a;--side:#0b0612;--card:#09050f;--bd:#3a2260;--dim:#8a62c4}
+:root[data-theme="soft"]{--g:#c9d1d9;--bg:#14161a;--side:#181b20;--card:#1b1e24;--bd:#2d333b;--dim:#8b949e;--on:#14161a}
+:root[data-theme="light"]{--g:#14532d;--bg:#f6f7f2;--side:#eaefe9;--card:#fff;--bd:#bfd3c6;--dim:#4d6b58;--on:#fff;color-scheme:light}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--g);font:14px/1.55 "Courier New",Courier,monospace;display:flex;overflow:hidden}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:99;background:linear-gradient(rgba(0,0,0,0) 50%,rgba(0,0,0,.22) 50%);background-size:100% 3px}
+:root[data-theme="soft"] body::after,:root[data-theme="light"] body::after{display:none}
+a{color:var(--g)}
+:focus-visible{outline:2px solid var(--g);outline-offset:2px}
+.glow{text-shadow:0 0 8px color-mix(in srgb,var(--g) 55%,transparent)}
+aside{width:280px;flex:none;background:var(--side);border-right:1px solid var(--bd);display:flex;flex-direction:column;z-index:50}
+.brand{padding:14px 16px;border-bottom:1px solid var(--bd)}
+.brand b{font-size:18px;letter-spacing:3px}.brand small{display:block;color:var(--dim);font-size:11px}
+.search{padding:10px;border-bottom:1px solid var(--bd)}
+input,select,textarea{font:inherit;color:var(--g);background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:7px 9px;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--g);outline:0}
+#chs{flex:1;overflow-y:auto;padding:8px}
+.cath{width:100%;display:flex;justify-content:space-between;background:none;border:0;color:var(--dim);font:bold 11px "Courier New",monospace;letter-spacing:1px;padding:8px 6px;cursor:pointer;text-align:left}
+.ch{display:flex;justify-content:space-between;text-decoration:none;color:var(--dim);padding:5px 10px;border-radius:4px;font-size:13px}
+.ch:hover{color:var(--g);background:color-mix(in srgb,var(--g) 10%,transparent)}
+.ch.on{background:var(--g);color:var(--on);font-weight:bold}
+.ch i{font-style:normal;font-size:11px;border:1px solid currentColor;border-radius:8px;padding:0 6px}
+#own{padding:12px;border-top:1px solid var(--bd);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
+.top{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--bd);background:var(--side)}
+.top h2{margin:0;font-size:16px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top select{width:auto}
+#menu{display:none}
+.view{flex:1;overflow-y:auto;padding:22px;max-width:960px;width:100%;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:6px;padding:16px;margin-bottom:14px;box-shadow:0 0 12px color-mix(in srgb,var(--g) 10%,transparent)}
+.card:hover{border-color:var(--g)}
+.card h3,.card h4{margin:0 0 6px}
+.mut{color:var(--dim);font-size:12px}
+.tag{border:1px solid var(--g);border-radius:4px;padding:0 7px;font-size:11px}
+.b,.btn{display:inline-block;background:var(--bg);color:var(--g);border:1.5px solid var(--g);border-radius:4px;padding:7px 14px;font:bold 12px "Courier New",monospace;cursor:pointer;text-decoration:none;margin:3px 0}
+.b:hover,.btn:hover,.b.on{background:var(--g);color:var(--on)}
+.req{border:2px solid var(--g);border-radius:6px;padding:14px;margin:18px 0}
+.req ul{list-style:none;margin:0;padding:0}
+.req li{display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap;border-top:1px dashed var(--bd);padding:8px 0}
+.req li:first-child{border:0}.req small{display:block;color:var(--dim)}
+.body h3{margin:18px 0 6px}.body p,.body li,.note p{color:color-mix(in srgb,var(--g) 85%,var(--bg))}
+.form{display:grid;gap:12px}.form label{display:grid;gap:4px;font-weight:bold}
+.form textarea{min-height:200px;resize:vertical}
+.rrow{display:grid;grid-template-columns:1fr 1.4fr 1fr auto;gap:6px}
+.status{border-top:1px solid var(--bd);background:var(--side);padding:8px 16px;font-size:12px;color:var(--dim);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#bd{display:none}
+@media(max-width:800px){
+ aside{position:fixed;inset:0 auto 0 0;transform:translateX(-100%);transition:transform .25s;padding-top:env(safe-area-inset-top,0px)}
+ aside.open{transform:none}
+ #bd.open{display:block;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:40}
+ #menu{display:inline-block}
+ .rrow{grid-template-columns:1fr}
 }
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--green);
-  font-family: 'Courier New', Courier, monospace;
-  overflow-x: hidden;
-}
-
-/* Custom scrollbars for retro terminal look */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--green);
-}
-
-.glow-text {
-  text-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
-}
-
-.glow-box {
-  box-shadow: 0 0 12px rgba(0, 255, 102, 0.15);
-  border: 1px solid var(--border);
-}
-
-.glow-box:hover {
-  border-color: var(--green);
-  box-shadow: 0 0 18px rgba(0, 255, 102, 0.3);
-}
-
-/* CRT scanline effect overlay */
-.crt::after {
-  content: " ";
-  display: block;
-  position: fixed;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-  z-index: 999;
-  background-size: 100% 3px, 3px 100%;
-  pointer-events: none;
-}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
-
-<body class="crt flex h-screen overflow-hidden">
-
-<!-- Mobile Overlay Backdrop -->
-<div id="sidebar-backdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/70 z-40 md:hidden hidden"></div>
-
-<!-- Sidebar Navigation -->
-<aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-72 bg-[var(--bg-sidebar)] border-r border-[var(--border)] flex flex-col transition-transform duration-300 transform -translate-x-full md:translate-x-0 shrink-0">
-  <!-- Server Header -->
-  <div class="p-4 border-b border-[var(--border)] flex items-center justify-between bg-black/40">
-    <div class="flex items-center space-x-3">
-      <div class="w-10 h-10 rounded bg-[var(--bg)] border border-[var(--green)] flex items-center justify-center glow-box">
-        <i class="fa-solid fa-terminal text-lg"></i>
-      </div>
-      <div>
-        <h1 class="font-bold text-base glow-text tracking-wider">BREWSTATION</h1>
-        <p class="text-[10px] text-emerald-500/80"><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1"></span>ONLINE: 1,337</p>
-      </div>
-    </div>
-    <button onclick="toggleMobileSidebar()" class="md:hidden text-[var(--green)] p-1 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-  </div>
-
-  <!-- Channel Search -->
-  <div class="p-3 border-b border-[var(--border)] bg-black/20">
-    <div class="relative">
-      <i class="fa-solid fa-search absolute left-3 top-2.5 text-xs text-emerald-600"></i>
-      <input type="text" id="channel-search" oninput="filterChannels(this.value)" placeholder="Search channels..." class="w-full bg-[var(--bg)] border border-[var(--border)] rounded px-3 py-1.5 pl-8 text-xs text-[var(--green)] focus:outline-none focus:border-[var(--green)] placeholder-emerald-800">
-    </div>
-  </div>
-
-  <!-- Channels List Container -->
-  <div id="channels-container" class="flex-1 overflow-y-auto p-2 space-y-3 text-xs">
-    <!-- Populated dynamically via JS -->
-  </div>
-
-  <!-- User Footer Profile status -->
-  <div class="p-3 border-t border-[var(--border)] bg-black/60 flex items-center justify-between text-xs">
-    <div class="flex items-center space-x-2 truncate">
-      <div class="w-7 h-7 rounded bg-emerald-950 border border-[var(--green)] flex items-center justify-center text-[var(--green)] font-bold">G</div>
-      <div class="truncate">
-        <div class="font-bold truncate text-[var(--green)]">Guest_User</div>
-        <div class="text-[10px] text-emerald-600">#unauthenticated</div>
-      </div>
-    </div>
-    <button onclick="openPostModal()" title="New Post" class="p-2 border border-[var(--border)] hover:border-[var(--green)] rounded text-[var(--green)] hover:bg-[var(--green)] hover:text-black transition-colors"><i class="fa-solid fa-plus"></i></button>
-  </div>
+<body>
+<div id="bd"></div>
+<aside id="side">
+  <div class="brand"><b class="glow">BREWSTATION</b><small>PlayStation homebrew hub</small></div>
+  <div class="search"><input id="q" placeholder="Search channels…" aria-label="Search channels"></div>
+  <div id="chs"></div>
+  <div id="own"></div>
 </aside>
-
-<!-- Main Content Area -->
-<main class="flex-1 flex flex-col h-screen min-w-0 bg-[var(--bg)]">
-  <!-- Top Header Bar -->
-  <header class="h-14 border-b border-[var(--border)] flex items-center justify-between px-4 bg-black/40 shrink-0">
-    <div class="flex items-center space-x-3 truncate">
-      <button onclick="toggleMobileSidebar()" class="md:hidden text-[var(--green)] p-1 hover:text-white mr-1"><i class="fa-solid fa-bars text-lg"></i></button>
-      <i class="fa-solid fa-hashtag text-[var(--green)] opacity-80 text-base"></i>
-      <h2 id="active-channel-title" class="font-bold text-sm md:text-base glow-text truncate">announcements</h2>
-      <span id="active-channel-badge" class="hidden sm:inline-block border border-[var(--green)] px-2 py-0.5 text-[10px] rounded text-emerald-400">official updates</span>
-    </div>
-    <div class="flex items-center space-x-3 text-xs">
-      <button onclick="switchTab('forum')" id="tab-btn-forum" class="px-3 py-1.5 border border-[var(--green)] bg-[var(--green)] text-black font-bold rounded transition-all">Discussions</button>
-      <button onclick="switchTab('giscus')" id="tab-btn-giscus" class="px-3 py-1.5 border border-[var(--border)] hover:border-[var(--green)] text-[var(--green)] rounded transition-all">Giscus Chat</button>
-    </div>
+<main>
+  <header class="top">
+    <button class="b" id="menu" aria-label="Open channels">☰</button>
+    <h2 id="ct" class="glow"># announcements</h2>
+    <select id="theme" aria-label="Color theme"><option value="green">Theme: Green</option><option value="amber">Amber</option><option value="blue">Blue</option><option value="purple">Purple</option><option value="soft">Soft grey</option><option value="light">Light</option></select>
   </header>
-
-  <!-- Content Viewport -->
-  <div class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
-    
-    <!-- Channel Banner Info Box -->
-    <div class="p-4 rounded bg-[var(--bg-card)] glow-box border border-[var(--border)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-      <div>
-        <div class="text-[10px] text-emerald-500 uppercase tracking-widest mb-1">Active Terminal Channel</div>
-        <h3 id="banner-title" class="text-lg font-bold glow-text"># announcements</h3>
-        <p id="banner-desc" class="text-xs text-emerald-400/80 mt-1">Official news, updates, and releases from the BrewStation core team.</p>
-      </div>
-      <button onclick="openPostModal()" class="whitespace-nowrap px-4 py-2 border border-[var(--green)] hover:bg-[var(--green)] hover:text-black font-bold text-xs rounded transition-all flex items-center space-x-2">
-        <i class="fa-solid fa-feather"></i><span>New Brew Post</span>
-      </button>
-    </div>
-
-    <!-- TAB 1: Simulated / GitHub Discussions Feed -->
-    <div id="view-forum" class="space-y-4">
-      <div class="flex items-center justify-between border-b border-[var(--border)] pb-2">
-        <h4 class="text-sm font-bold uppercase tracking-wider flex items-center space-x-2">
-          <i class="fa-solid fa-scroll text-[var(--green)]"></i><span>Channel Brews & Threads</span>
-        </h4>
-        <span id="thread-count" class="text-xs text-emerald-600">0 threads loaded</span>
-      </div>
-      <div id="posts" class="space-y-3">
-        <div class="p-6 text-center text-xs text-emerald-600 border border-dashed border-[var(--border)] rounded">
-          <i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
-          <p>Initializing secure terminal handshake & loading discussions...</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 2: Embedded Giscus Discussion Section -->
-    <div id="view-giscus" class="hidden space-y-4">
-      <div class="flex items-center justify-between border-b border-[var(--border)] pb-2">
-        <h4 class="text-sm font-bold uppercase tracking-wider flex items-center space-x-2">
-          <i class="fa-solid fa-comments text-[var(--green)]"></i><span>Live Giscus Thread</span>
-        </h4>
-        <span class="text-xs text-emerald-600">Synced with GitHub Discussions</span>
-      </div>
-      <div class="p-4 rounded bg-[var(--bg-card)] glow-box border border-[var(--border)]">
-        <div id="giscus_container"></div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Footer status bar -->
-  <footer class="h-8 border-t border-[var(--border)] bg-black/60 px-4 flex items-center justify-between text-[11px] text-emerald-600 shrink-0">
-    <div class="flex items-center space-x-3 truncate">
-      <span class="flex items-center"><i class="fa-solid fa-shield-halved mr-1.5 text-[var(--green)]"></i>Secure Matrix Protocol</span>
-      <span class="hidden sm:inline">|</span>
-      <span id="footer-console" class="hidden sm:inline">Detected Console: PC/Terminal</span>
-    </div>
-    <div>BrewStation v3.5.0 © 2026</div>
+  <div class="view" id="view"></div>
+  <footer class="status">
+    <span>BrewStation • Not affiliated with Sony Interactive Entertainment. Use only on hardware you own. Modding can brick your console.</span>
+    <a href="https://discord.gg/YOURINVITE" target="_blank" rel="noopener">Join our Discord community</a>
   </footer>
 </main>
-
-<!-- New Post Modal -->
-<div id="post-modal" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 hidden">
-  <div class="bg-[var(--bg-sidebar)] border border-[var(--green)] glow-box w-full max-w-lg rounded p-6 space-y-4 relative">
-    <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
-      <h3 class="font-bold text-sm glow-text uppercase"><i class="fa-solid fa-terminal mr-2"></i>Create New Brew Post</h3>
-      <button onclick="closePostModal()" class="text-[var(--green)] hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-    </div>
-    <div class="space-y-3 text-xs">
-      <div>
-        <label class="block text-emerald-500 mb-1">Target Channel</label>
-        <input type="text" id="modal-channel-display" readonly class="w-full bg-[var(--bg)] border border-[var(--border)] rounded p-2 text-[var(--green)] font-bold">
-      </div>
-      <div>
-        <label class="block text-emerald-500 mb-1">Brew Title</label>
-        <input type="text" id="modal-title" placeholder="e.g., PS2 OPL SMB Loading Guide 2026" class="w-full bg-[var(--bg)] border border-[var(--border)] rounded p-2 text-[var(--green)] focus:outline-none focus:border-[var(--green)]">
-      </div>
-      <div>
-        <label class="block text-emerald-500 mb-1">Content / Payload</label>
-        <textarea id="modal-body" rows="5" placeholder="Write your guide, release notes, or help request here..." class="w-full bg-[var(--bg)] border border-[var(--border)] rounded p-2 text-[var(--green)] focus:outline-none focus:border-[var(--green)]"></textarea>
-      </div>
-      <p class="text-[10px] text-emerald-600">Posting requires GitHub authentication. Anonymous submissions will appear as <b>Anonymous</b>.</p>
-    </div>
-    <div class="flex justify-end space-x-3 pt-2 border-t border-[var(--border)]">
-      <button onclick="closePostModal()" class="px-4 py-2 border border-[var(--border)] hover:border-[var(--green)] rounded text-xs">Cancel</button>
-      <button onclick="submitBrewPost()" class="px-4 py-2 bg-[var(--green)] text-black font-bold rounded text-xs hover:shadow-[0_0_10px_var(--green)]">Publish Brew</button>
-    </div>
-  </div>
-</div>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
-/* CONFIG */
-const OWNER = "GoldenFieldsPS3";  
-const REPO  = "brewstation.github.io";
-
-/* Role data cache */
-let ROLE_DATA = {};
-fetch("roles.json")
-  .then(r => r.json())
-  .then(j => ROLE_DATA = j)
-  .catch(() => { ROLE_DATA = { members: { "GoldenFieldsPS3": ["Admin", "Core Dev"] } }; });
-
-/* Define Complete Category & Channel Structure */
-const CATEGORIES = [
-  {
-    name: "GENERAL / COMMUNITY",
-    icon: "fa-earth-americas",
-    channels: [
-      { id: "announcements", name: "announcements", desc: "Official news, updates, and releases from the BrewStation core team.", badge: "official" },
-      { id: "rules", name: "rules", desc: "Server guidelines, safety codes, and community conduct.", badge: "read-first" },
-      { id: "community-videos", name: "community-videos", desc: "Showcases, tutorials, and game mods created by our community.", badge: "media" },
-      { id: "wall-of-idiots", name: "wall-of-idiots", desc: "Hall of fame for hilarious soft-brick fails and classic user moments.", badge: "hall-of-shame" }
-    ]
-  },
-  {
-    name: "PLAYSTATION 1 (PS1)",
-    icon: "fa-compact-disc",
-    channels: [
-      { id: "ps1-general", name: "ps1-general", desc: "General discussions about the original PlayStation console.", badge: "classic" },
-      { id: "ps1-homebrew", name: "ps1-homebrew", desc: "PS1 homebrew development, CD-R exploits, and custom apps.", badge: "dev" },
-      { id: "ps1-emulation", name: "ps1-emulation", desc: "PS1 emulation on modern hardware and handhelds.", badge: "emu" },
-      { id: "ps1-help", name: "ps1-help", desc: "Troubleshooting laser replacements, PSIO, and XStation.", badge: "support" },
-      { id: "ps1-resources", name: "ps1-resources", desc: "SDKs, documentation, patches, and tools.", badge: "files" },
-      { id: "ps1-marketplace", name: "ps1-marketplace", desc: "Buy, sell, or trade PS1 consoles, modchips, and accessories.", badge: "trade" }
-    ]
-  },
-  {
-    name: "PLAYSTATION 2 (PS2)",
-    icon: "fa-compact-disc",
-    channels: [
-      { id: "ps2-general", name: "ps2-general", desc: "General discussions about the legendary PlayStation 2.", badge: "classic" },
-      { id: "ps2-homebrew", name: "ps2-homebrew", desc: "FreeMCBoot (FMCB), MechaPwn, and native homebrew apps.", badge: "dev" },
-      { id: "ps2-opl", name: "ps2-opl", desc: "Open PS2 Loader (OPL) configuration, SMB, and HDD support.", badge: "essential" },
-      { id: "ps2-emulation", name: "ps2-emulation", desc: "PCSX2 optimization and retro hardware emulation.", badge: "emu" },
-      { id: "ps2-help", name: "ps2-help", desc: "Hardware repairs, disc read errors, and softmod assistance.", badge: "support" },
-      { id: "ps2-resources", name: "ps2-resources", desc: "ISO tools, memory card images, and patches.", badge: "files" },
-      { id: "ps2-marketplace", name: "ps2-marketplace", desc: "Buy, sell, or trade PS2 consoles, Network Adapters, and FMCB cards.", badge: "trade" }
-    ]
-  },
-  {
-    name: "PLAYSTATION PORTABLE (PSP)",
-    icon: "fa-gamepad",
-    channels: [
-      { id: "psp-general", name: "psp-general", desc: "General discussions about Sony's first handheld.", badge: "handheld" },
-      { id: "psp-homebrew", name: "psp-homebrew", desc: "Custom Firmware (PRO/LME), plugins, and homebrew games.", badge: "cfw" },
-      { id: "psp-emulation", name: "psp-emulation", desc: "Emulating SNES, GBA, PS1, and arcade classics on PSP.", badge: "emu" },
-      { id: "psp-help", name: "psp-help", desc: "Battery mods, screen replacements, and softbrick recovery.", badge: "support" },
-      { id: "psp-resources", name: "psp-resources", desc: "PRX plugins, themes, homebrew loaders, and ISO tools.", badge: "files" },
-      { id: "psp-marketplace", name: "psp-marketplace", desc: "Buy, sell, or trade PSP 1000/2000/3000/Go and accessories.", badge: "trade" }
-    ]
-  },
-  {
-    name: "PLAYSTATION 3 (PS3)",
-    icon: "fa-cube",
-    channels: [
-      { id: "ps3-general", name: "ps3-general", desc: "General Cell Broadband Engine discussion.", badge: "cell" },
-      { id: "ps3-homebrew", name: "ps3-homebrew", desc: "webMAN MOD, multiMAN, and homebrew utilities.", badge: "apps" },
-      { id: "ps3-emulation", name: "ps3-emulation", desc: "RPCS3 emulator discussion and game compatibility.", badge: "emu" },
-      { id: "ps3-help", name: "ps3-help", desc: "General troubleshooting and error code assistance.", badge: "support" },
-      { id: "ps3-resources", name: "ps3-resources", desc: "PKG files, ISO converters, and configuration guides.", badge: "files" },
-      { id: "ps3-cfw", name: "ps3-cfw", desc: "Rebug, Evilnat Custom Firmware, and syscon diagnostics.", badge: "cfw" },
-      { id: "ps3-hen", name: "ps3-hen", desc: "Playstation Homebrew Enabler for non-CFW compatible models.", badge: "hen" },
-      { id: "ps3-hardware", name: "ps3-hardware", desc: "NEC/TOKIN capacitor replacement, delidding, and RSX frankenstein mods.", badge: "hardware" },
-      { id: "ps3-badwdsd", name: "ps3-badwdsd", desc: "Special debugging, storage anomalies, and advanced system tinkering.", badge: "advanced" },
-      { id: "ps3-marketplace", name: "ps3-marketplace", desc: "Buy, sell, or trade PS3 Fat/Slim/SuperSlim consoles and parts.", badge: "trade" }
-    ]
-  },
-  {
-    name: "PLAYSTATION VITA (PSV)",
-    icon: "fa-tablet-screen-button",
-    channels: [
-      { id: "psv-general", name: "psv-general", desc: "General PS Vita & PlayStation TV community chat.", badge: "handheld" },
-      { id: "psv-homebrew", name: "psv-homebrew", desc: "VitaDB, plugins, port collections, and native homebrew.", badge: "homebrew" },
-      { id: "psv-emulation", name: "psv-emulation", desc: "RetroArch, DaedalusX64, and adrenaline PSP emulation.", badge: "emu" },
-      { id: "psv-help", name: "psv-help", desc: "Plugin conflicts, SD2Vita setup assistance, and error fixes.", badge: "support" },
-      { id: "psv-resources", name: "psv-resources", desc: "Vpk packages, custom themes, and configuration scripts.", badge: "files" },
-      { id: "psv-henkaku", name: "psv-henkaku", desc: "Enso, HenKaku, and modern exploit chains.", badge: "exploit" },
-      { id: "psv-hardware", name: "psv-hardware", desc: "OLED screen mods, USB-C mods, and battery upgrades.", badge: "hardware" },
-      { id: "psv-marketplace", name: "psv-marketplace", desc: "Buy, sell, or trade PS Vitas, PS TVs, and SD2Vita adapters.", badge: "trade" }
-    ]
-  },
-  {
-    name: "PLAYSTATION 4 (PS4)",
-    icon: "fa-gamepad",
-    channels: [
-      { id: "ps4-general", name: "ps4-general", desc: "General PlayStation 4 modding and firmware discussion.", badge: "gen" },
-      { id: "ps4-homebrew", name: "ps4-homebrew", desc: "Homebrew loaders, game dumps, and payload execution.", badge: "homebrew" },
-      { id: "ps4-emulation", name: "ps4-emulation", desc: "PS4 emulation progress and compatibility on PC.", badge: "emu" },
-      { id: "ps4-help", name: "ps4-help", desc: "Firmware version guidance, update blocking, and setup help.", badge: "support" },
-      { id: "ps4-resources", name: "ps4-resources", desc: "Payload bins, game patches, and SDK resources.", badge: "files" },
-      { id: "ps4-mira", name: "ps4-mira", desc: "Mira project, homebrew enablers, and debugging tools.", badge: "debug" },
-      { id: "ps4-hen", name: "ps4-hen", desc: "Exploit execution and Homebrew Enabler discussions.", badge: "hen" },
-      { id: "ps4-hardware", name: "ps4-hardware", desc: "Thermal repasting, internal cleaning, and hard drive upgrades.", badge: "hardware" },
-      { id: "ps4-webkit", name: "ps4-webkit", desc: "Browser exploit vectors and vulnerability research.", badge: "exploit" },
-      { id: "goldhen", name: "goldhen", desc: "GoldHEN features, cheats, FTP server, and plugin development.", badge: "essential" },
-      { id: "ps4-marketplace", name: "ps4-marketplace", desc: "Buy, sell, or trade low-firmware PS4 consoles and accessories.", badge: "trade" }
-    ]
-  },
-  {
-    name: "PLAYSTATION 5 (PS5)",
-    icon: "fa-microchip",
-    channels: [
-      { id: "ps5-general", name: "ps5-general", desc: "General PlayStation 5 modding & security discussion.", badge: "nextgen" },
-      { id: "ps5-homebrew", name: "ps5-homebrew", desc: "Early homebrew apps and ELF loaders.", badge: "homebrew" },
-      { id: "ps5-emulation", name: "ps5-emulation", desc: "PS5 emulation research on PC hardware.", badge: "emu" },
-      { id: "ps5-help", name: "ps5-help", desc: "Firmware advice (staying low vs updating) and support.", badge: "support" },
-      { id: "ps5-resources", name: "ps5-resources", desc: "Kernel dumps, SDK references, and developer tools.", badge: "files" },
-      { id: "ps5-etahen", name: "ps5-etahen", desc: "EtaHEN payload discussion and configuration.", badge: "payload" },
-      { id: "ps5-hardware", name: "ps5-hardware", desc: "Liquid metal cooling, heatsink revisions, and SSD expansion.", badge: "hardware" },
-      { id: "ps5-exploits", name: "ps5-exploits", desc: "Kernel exploits, hypervisor research, and vulnerability disclosures.", badge: "security" },
-      { id: "ps5-marketplace", name: "ps5-marketplace", desc: "Buy, sell, or trade low-firmware PS5 consoles and controllers.", badge: "trade" }
-    ]
-  },
-  {
-    name: "PLAYSTATION PORTAL (PS Portal)",
-    icon: "fa-tablet",
-    channels: [
-      { id: "psportal-general", name: "psportal-general", desc: "General PlayStation Portal streaming device discussion.", badge: "remote" },
-      { id: "psportal-homebrew", name: "psportal-homebrew", desc: "Android subsystem tinkering and sideloading experiments.", badge: "homebrew" },
-      { id: "psportal-help", name: "psportal-help", desc: "Wi-Fi optimization, remote play lag fixing, and setup help.", badge: "support" },
-      { id: "psportal-resources", name: "psportal-resources", desc: "Guides, network tweaks, and utility apps.", badge: "files" },
-      { id: "psportal-hardware", name: "psportal-hardware", desc: "Screen protectors, ergonomic grips, and battery mods.", badge: "hardware" },
-      { id: "psportal-marketplace", name: "psportal-marketplace", desc: "Buy, sell, or trade PS Portals and accessories.", badge: "trade" }
-    ]
+(function(){
+  /* ===== SETUP: paste your Supabase values (Project Settings > API). The anon key is meant to be public. ===== */
+  var SUPABASE_URL='https://ggaxfvgtpkwhdakemilb.supabase.co/rest/v1/',SUPABASE_KEY='sb_publishable_xQl9tuaLtxUz81gD6LUsSA_qYooURVs';
+  var sb=null;
+  try{if(SUPABASE_URL.indexOf('YOUR-')<0&&window.supabase)sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY)}catch(e){}
+  var $=function(i){return document.getElementById(i)};
+  var P=[],user=null,me=null,form=null,lg=false,pw=false,msg='',delAsk='',q='',col={},cur='announcements';
+  var DEMO=[{id:'demo',channel:'announcements',title:'Site setup needed',author:'BrewStation Team',date:'2026-11-15',summary:'Add your Supabase details to index.html to turn on posts and staff logins.',req:[],body:'## Next step\nFollow the README that came with this site.',notes:'',author_id:null}];
+  var T={general:['General discussion about {C}.','chat'],homebrew:['Homebrew, tools and apps for {C}.','dev'],emulation:['Emulation and compatibility for {C}.','emu'],help:['Troubleshooting and setup help for {C}.','support'],resources:['Files, guides and tools for {C}.','files'],hardware:['Repairs and hardware mods for {C}.','hardware'],marketplace:['Buy, sell or trade {C} gear and accessories.','trade']};
+  var CATS=[
+   {n:'GENERAL / COMMUNITY',k:'',c:'',ch:[['announcements','Official news, updates and releases from the BrewStation team.','official'],['rules','Server guidelines, safety and community conduct.','read-first'],['community-videos','Showcases and tutorials from our community.','media'],['wall-of-idiots','Hall of fame for funny soft-brick fails.','fun']]},
+   {n:'PLAYSTATION 1 (PS1)',k:'ps1',c:'PS1',ch:['general','homebrew','emulation','help','resources','marketplace']},
+   {n:'PLAYSTATION 2 (PS2)',k:'ps2',c:'PS2',ch:['general','homebrew',['opl','Open PS2 Loader setup, SMB and HDD support.','essential'],'emulation','help','resources','marketplace']},
+   {n:'PLAYSTATION PORTABLE (PSP)',k:'psp',c:'PSP',ch:['general','homebrew','emulation','help','resources','marketplace']},
+   {n:'PLAYSTATION 3 (PS3)',k:'ps3',c:'PS3',ch:['general','homebrew','emulation','help','resources',['cfw','Custom firmware, hCFW and diagnostics.','cfw'],['hen','Homebrew Enabler for non-CFW models.','hen'],'hardware',['badwdsd','Advanced debugging and system tinkering.','advanced'],'marketplace']},
+   {n:'PLAYSTATION VITA (PSV)',k:'psv',c:'PS Vita',ch:['general','homebrew','emulation','help','resources',['henkaku','Enso, HenKaku and exploit chains.','exploit'],'hardware','marketplace']},
+   {n:'PLAYSTATION 4 (PS4)',k:'ps4',c:'PS4',ch:['general','homebrew','emulation','help','resources',['mira','Mira project and debugging tools.','debug'],['hen','Homebrew Enabler discussion.','hen'],'hardware',['webkit','Browser exploit research.','exploit'],['goldhen','GoldHEN features, cheats and plugins.','essential'],'marketplace']},
+   {n:'PLAYSTATION 5 (PS5)',k:'ps5',c:'PS5',ch:['general','homebrew','emulation','help','resources',['etahen','EtaHEN payload setup.','payload'],'hardware',['exploits','Kernel exploits and vulnerability research.','security'],'marketplace']},
+   {n:'PLAYSTATION PORTAL',k:'psportal',c:'PS Portal',ch:['general','homebrew','help','resources','hardware','marketplace']}
+  ],CH=[];
+  CATS.forEach(function(c){c.list=[];c.ch.forEach(function(x){var s,d,b;
+    if(typeof x==='string'){s=x;d=T[x][0].replace('{C}',c.c);b=T[x][1]}else{s=x[0];d=x[1];b=x[2]}
+    var o={id:c.k?c.k+'-'+s:s,desc:d,badge:b,cat:c.n};c.list.push(o);CH.push(o)})});
+  function chan(id){return CH.filter(function(x){return x.id===id})[0]}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function inl(s){return esc(s).replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')}
+  function safe(u){return /^https?:\/\//i.test(u)?esc(u):''}
+  function md(t){var o='',ul=false;String(t||'').split('\n').forEach(function(l){
+    var li=/^- (.*)/.exec(l),h=/^## (.*)/.exec(l);
+    if(!li&&ul){o+='</ul>';ul=false}
+    if(li){if(!ul){o+='<ul>';ul=true}o+='<li>'+inl(li[1])+'</li>'}
+    else if(h)o+='<h3>'+inl(h[1])+'</h3>';
+    else if(l.trim())o+='<p>'+inl(l)+'</p>'});
+    return o+(ul?'</ul>':'')}
+  function find(id){return P.filter(function(g){return g.id===id})[0]}
+  function cnt(id){return P.filter(function(p){return p.channel===id}).length}
+  function canPost(){return !!(sb&&user&&me&&!me.must_change)}
+  function canMod(p){return canPost()&&(me.role==='owner'||p.author_id===user.id)}
+  function load(){
+    if(!sb){P=DEMO;render();return Promise.resolve()}
+    return sb.from('posts').select('*').order('created_at',{ascending:false}).then(function(r){
+      if(r.error){msg='Could not load posts.'}else{P=r.data.map(function(p){p.date=String(p.created_at).slice(0,10);p.req=p.req||[];return p})}
+      render()})
   }
-];
-
-/* Current Active State */
-let activeChannel = CATEGORIES[0].channels[0];
-let activeTab = 'forum';
-
-/* Detect user console tag */
-function consoleTag(){
-  const ua = navigator.userAgent;
-  if(/Vita/i.test(ua)) return "PS Vita";
-  if(/PSP/i.test(ua)) return "PSP";
-  if(/PlayStation 3|PS3/i.test(ua)) return "PS3";
-  if(/PlayStation 4|PS4/i.test(ua)) return "PS4";
-  if(/PlayStation 5|PS5/i.test(ua)) return "PS5";
-  return "PC/Terminal";
-}
-document.getElementById("footer-console").textContent = `Detected Console: ${consoleTag()}`;
-
-/* Render Sidebar Channels */
-function renderSidebar(filterQuery = "") {
-  const container = document.getElementById("channels-container");
-  container.innerHTML = "";
-
-  CATEGORIES.forEach((cat, catIdx) => {
-    const filteredChannels = cat.channels.filter(ch => 
-      ch.name.toLowerCase().includes(filterQuery.toLowerCase()) || 
-      ch.desc.toLowerCase().includes(filterQuery.toLowerCase())
-    );
-
-    if(filterQuery && filteredChannels.length === 0) return;
-
-    const catDiv = document.createElement("div");
-    catDiv.className = "mb-3";
-    
-    // Category Header with Collapse Toggle
-    const headerId = `cat-header-${catIdx}`;
-    catDiv.innerHTML = `
-      <div onclick="toggleCategory(${catIdx})" class="flex items-center justify-between px-2 py-1.5 text-emerald-500 font-bold uppercase tracking-wider cursor-pointer hover:text-[var(--green)] select-none">
-        <span class="flex items-center space-x-2 truncate">
-          <i class="fa-solid ${cat.icon} w-4 text-center"></i>
-          <span class="truncate text-[11px]">${cat.name}</span>
-        </span>
-        <i id="cat-icon-${catIdx}" class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200"></i>
-      </div>
-      <div id="cat-list-${catIdx}" class="mt-1 space-y-0.5 pl-2"></div>
-    `;
-
-    container.appendChild(catDiv);
-    const listDiv = document.getElementById(`cat-list-${catIdx}`);
-
-    filteredChannels.forEach(ch => {
-      const isActive = activeChannel.id === ch.id;
-      const btn = document.createElement("button");
-      btn.className = `w-full text-left px-2.5 py-1.5 rounded flex items-center justify-between transition-colors ${
-        isActive 
-          ? 'bg-[var(--green)] text-black font-bold shadow-[0_0_10px_rgba(0,255,102,0.4)]' 
-          : 'text-emerald-400/80 hover:bg-emerald-950/40 hover:text-[var(--green)]'
-      }`;
-      btn.innerHTML = `
-        <span class="flex items-center space-x-2 truncate">
-          <span class="opacity-60">#</span>
-          <span class="truncate">${ch.name}</span>
-        </span>
-        ${ch.badge ? `<span class="text-[9px] px-1.5 py-0.2 rounded border ${isActive ? 'border-black text-black' : 'border-emerald-800 text-emerald-500'} uppercase">${ch.badge}</span>` : ''}
-      `;
-      btn.onclick = () => selectChannel(ch);
-      listDiv.appendChild(btn);
-    });
-  });
-}
-
-function toggleCategory(catIdx) {
-  const list = document.getElementById(`cat-list-${catIdx}`);
-  const icon = document.getElementById(`cat-icon-${catIdx}`);
-  if(list.style.display === "none") {
-    list.style.display = "block";
-    icon.style.transform = "rotate(0deg)";
-  } else {
-    list.style.display = "none";
-    icon.style.transform = "rotate(-90deg)";
+  function loadMe(){
+    if(!sb||!user){me=null;pw=false;render();return Promise.resolve()}
+    return sb.from('staff').select('role,must_change').eq('id',user.id).maybeSingle().then(function(r){
+      me=r.data||null;
+      if(!me){msg='This account is not a staff account.';sb.auth.signOut()}else if(me.must_change)pw=true;
+      render()})
   }
-}
-
-function filterChannels(query) {
-  renderSidebar(query);
-}
-
-function toggleMobileSidebar() {
-  const sidebar = document.getElementById("sidebar");
-  const backdrop = document.getElementById("sidebar-backdrop");
-  sidebar.classList.toggle("-translate-x-full");
-  backdrop.classList.toggle("hidden");
-}
-
-/* Select Channel & Update View */
-function selectChannel(ch) {
-  activeChannel = ch;
-  renderSidebar(document.getElementById("channel-search").value);
-  
-  // Update Header
-  document.getElementById("active-channel-title").textContent = ch.name;
-  const badgeEl = document.getElementById("active-channel-badge");
-  if(ch.badge) {
-    badgeEl.textContent = ch.badge;
-    badgeEl.classList.remove("hidden");
-  } else {
-    badgeEl.classList.add("hidden");
+  function side(){
+    var o='',f=q.toLowerCase();
+    CATS.forEach(function(c,i){
+      var L=c.list.filter(function(x){return !f||x.id.indexOf(f)>-1||x.desc.toLowerCase().indexOf(f)>-1});if(!L.length)return;
+      o+='<div><button class="cath" data-cat="'+i+'"><span>'+esc(c.n)+'</span><span>'+(col[i]&&!f?'+':'–')+'</span></button>'+(col[i]&&!f?'':L.map(function(x){var n=cnt(x.id);return '<a class="ch'+(x.id===cur?' on':'')+'" href="#c-'+x.id+'"><span># '+esc(x.id)+'</span>'+(n?'<i>'+n+'</i>':'')+'</a>'}).join(''))+'</div>'});
+    $('chs').innerHTML=o||'<p class="mut">No channels match.</p>';
+    var w='';
+    if(!sb)w='<span class="mut">Setup needed</span>';
+    else if(!user||!me)w='<button class="b" data-login>Staff login</button>';
+    else{w='<span class="mut" style="width:100%">'+esc(user.email)+' ('+esc(me.role)+')</span>';
+      if(canPost())w+='<button class="b on" data-new>+ New post</button>';
+      w+='<button class="b" data-pw>Change password</button><button class="b" data-logout>Log out</button>'}
+    $('own').innerHTML=w;
   }
-
-  // Update Banner
-  document.getElementById("banner-title").textContent = `# ${ch.name}`;
-  document.getElementById("banner-desc").textContent = ch.desc;
-
-  // On mobile, auto close sidebar
-  if(window.innerWidth < 768) {
-    toggleMobileSidebar();
-  }
-
-  // Reload discussions & Giscus for the new channel term
-  loadDiscussions();
-  reloadGiscus(ch.name);
-}
-
-/* Tab Switcher */
-function switchTab(tab) {
-  activeTab = tab;
-  const btnForum = document.getElementById("tab-btn-forum");
-  const btnGiscus = document.getElementById("tab-btn-giscus");
-  const viewForum = document.getElementById("view-forum");
-  const viewGiscus = document.getElementById("view-giscus");
-
-  if(tab === 'forum') {
-    btnForum.className = "px-3 py-1.5 border border-[var(--green)] bg-[var(--green)] text-black font-bold rounded transition-all";
-    btnGiscus.className = "px-3 py-1.5 border border-[var(--border)] hover:border-[var(--green)] text-[var(--green)] rounded transition-all";
-    viewForum.classList.remove("hidden");
-    viewGiscus.classList.add("hidden");
-  } else {
-    btnGiscus.className = "px-3 py-1.5 border border-[var(--green)] bg-[var(--green)] text-black font-bold rounded transition-all";
-    btnForum.className = "px-3 py-1.5 border border-[var(--border)] hover:border-[var(--green)] text-[var(--green)] rounded transition-all";
-    viewGiscus.classList.remove("hidden");
-    viewForum.classList.add("hidden");
-  }
-}
-
-/* Fetch GitHub Discussions for current channel */
-function loadDiscussions() {
-  const box = document.getElementById("posts");
-  box.innerHTML = `
-    <div class="p-6 text-center text-xs text-emerald-600 border border-dashed border-[var(--border)] rounded">
-      <i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
-      <p>Fetching threads for #${activeChannel.name}...</p>
-    </div>
-  `;
-
-  fetch(`https://api.github.com/repos/${OWNER}/${REPO}/discussions`)
-    .then(r => r.json())
-    .then(data => {
-      box.innerHTML = "";
-      if(!Array.isArray(data) || data.length === 0) {
-        renderMockDiscussions(box);
-        return;
-      }
-
-      // Filter or display discussions matching active channel or show default set
-      const relevant = data.filter(d => d.title.toLowerCase().includes(activeChannel.name.split('-')[0]) || true);
-      document.getElementById("thread-count").textContent = `${relevant.length} active threads`;
-
-      relevant.forEach(d => {
-        const author = d.user?.login || "Anonymous";
-        const roles = (ROLE_DATA.members?.[author] || ["Member"])
-          .map(r => `<span class="border border-[var(--green)] px-1.5 py-0.5 text-[9px] rounded text-emerald-300 ml-1.5">${r}</span>`).join("");
-
-        const div = document.createElement("div");
-        div.className = "p-4 rounded bg-[var(--bg-card)] glow-box border border-[var(--border)] space-y-2";
-        div.innerHTML = `
-          <div class="flex items-center justify-between text-xs text-emerald-600 border-b border-[var(--border)] pb-2">
-            <div>
-              <span class="font-bold text-[var(--green)]">${author}</span>
-              <span class="text-[10px] text-emerald-500/80 ml-1">#${consoleTag()}</span>
-              ${roles}
-            </div>
-            <span class="text-[10px]"><i class="fa-regular fa-clock mr-1"></i>${new Date(d.created_at || Date.now()).toLocaleDateString()}</span>
-          </div>
-          <h5 class="font-bold text-sm text-[var(--green)] glow-text">${d.title}</h5>
-          <p class="text-xs text-emerald-400/90 leading-relaxed">${d.body?.substring(0, 250) || "No preview available..."}...</p>
-          <div class="flex justify-end pt-2">
-            <a href="${d.html_url}" target="_blank" class="px-3 py-1 border border-[var(--green)] hover:bg-[var(--green)] hover:text-black rounded text-[11px] font-bold transition-all flex items-center space-x-1.5">
-              <span>Open on GitHub</span><i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
-            </a>
-          </div>
-        `;
-        box.appendChild(div);
-      });
-    })
-    .catch(() => {
-      renderMockDiscussions(box);
-    });
-}
-
-function renderMockDiscussions(box) {
-  box.innerHTML = "";
-  document.getElementById("thread-count").textContent = "3 simulated community threads";
-
-  const sampleBrews = [
-    {
-      title: `[GUIDE] Ultimate Setup for #${activeChannel.name} in 2026`,
-      author: "GoldenFieldsPS3",
-      date: "2 hours ago",
-      body: `Welcome to #${activeChannel.name}! This community thread aggregates the absolute best tools, custom firmwares, and troubleshooting scripts for this category. Ensure your console firmware matches the requirements before flashing or running payloads.`
-    },
-    {
-      title: `[RELEASE] Stable Homebrew Payload & Helper Suite v3.2`,
-      author: "BrewMaster_99",
-      date: "Yesterday",
-      body: `We have successfully pushed a major update to stabilize execution across all supported versions in #${activeChannel.name}. Check the repository for download links and SHA-256 verification hashes.`
-    },
-    {
-      title: `[HELP] Common errors and solutions in #${activeChannel.name}`,
-      author: "RetroModder",
-      date: "3 days ago",
-      body: `Having trouble with boot loops or USB detection? Read this pinned advisory before opening a new thread. Most issues stem from outdated configuration files or corrupted media storage.`
+  function reqRow(r){r=r||{};return '<div class="rrow"><input placeholder="Homebrew name" value="'+esc(r.name)+'" aria-label="Name"><input placeholder="https://download-link" value="'+esc(r.url)+'" aria-label="Link"><input placeholder="Note (version, mirror)" value="'+esc(r.note)+'" aria-label="Note"><button type="button" class="b" data-rm>Remove</button></div>'}
+  function chanOpts(v){return CATS.map(function(c){return '<optgroup label="'+esc(c.n)+'">'+c.list.map(function(x){return '<option value="'+x.id+'"'+(x.id===v?' selected':'')+'>#'+x.id+'</option>'}).join('')+'</optgroup>'}).join('')}
+  function formHtml(g){g=g||{req:[{}],author:'BrewStation Team',channel:cur};
+    return '<div class="card form"><label>Channel<select id="f-c">'+chanOpts(g.channel)+'</select></label>'
+    +'<label>Title<input id="f-t" value="'+esc(g.title)+'"></label>'
+    +'<label>Author<input id="f-a" value="'+esc(g.author)+'"></label>'
+    +'<label>Short description<input id="f-s" value="'+esc(g.summary)+'"></label>'
+    +'<div><b>Required homebrew (with links)</b><div id="f-r" style="display:grid;gap:8px;margin:6px 0">'+(g.req&&g.req.length?g.req:[{}]).map(reqRow).join('')+'</div><button type="button" class="b" id="f-add">Add homebrew link</button></div>'
+    +'<label>Content<textarea id="f-b" placeholder="## Step 1: Title&#10;Describe the step&#10;- List item&#10;[link text](https://example.com)">'+esc(g.body)+'</textarea></label>'
+    +'<label>Notes and troubleshooting<textarea id="f-n" style="min-height:90px">'+esc(g.notes)+'</textarea></label>'
+    +'<div><button class="b on" id="f-save" type="button">Publish post</button> <button class="b" id="f-cancel" type="button">Cancel</button></div>'
+    +'<span class="mut">Use ## for headings, - for lists and [text](url) for links. Posts go live for everyone at once.</span></div>'}
+  function loginHtml(){return '<div class="card form"><h3>Staff login</h3><span class="mut">No account? Ask the owner for a temporary password.</span><label>Email<input id="f-e" type="email" autocomplete="username"></label><label>Password<input id="f-p" type="password" autocomplete="current-password"></label><div><button class="b on" id="f-login" type="button">Log in</button> <button class="b" id="f-no" type="button">Cancel</button></div><span class="mut">'+esc(msg)+'</span></div>'}
+  function pwHtml(){var forced=me&&me.must_change;return '<div class="card form"><h3>'+(forced?'Choose your own password':'Change password')+'</h3>'+(forced?'<span>You signed in with a temporary password. Pick a new one (8+ characters) to continue.</span>':'')+'<label>New password<input id="f-p" type="password" autocomplete="new-password"></label><label>Repeat new password<input id="f-p2" type="password" autocomplete="new-password"></label><div><button class="b on" id="f-pwsave" type="button">Save password</button>'+(forced?'':' <button class="b" id="f-no" type="button">Cancel</button>')+'</div><span class="mut">'+esc(msg)+'</span></div>'}
+  function postCard(p){return '<div class="card"><h3><a href="#p-'+esc(p.id)+'" style="text-decoration:none">'+esc(p.title)+'</a></h3><div class="mut">'+esc(p.author)+' • '+esc(p.date)+(p.req&&p.req.length?' • <span class="tag">'+p.req.length+' required</span>':'')+'</div><p>'+inl(p.summary)+'</p><a class="btn" href="#p-'+esc(p.id)+'">Read</a></div>'}
+  function render(){
+    var h=location.hash,p=/^#p-/.test(h)?find(h.slice(3)):null,m=/^#c-(.+)/.exec(h);
+    if(p)cur=p.channel;else if(m&&chan(m[1]))cur=m[1];
+    var ch=chan(cur),o='';
+    $('ct').textContent='# '+cur;
+    if(pw&&user&&me)o=pwHtml();
+    else if(lg&&!user)o=loginHtml();
+    else if(form!==null){var c0=form==='new'?null:find(form);o='<h3>'+(c0?'Edit post':'New post')+'</h3>'+formHtml(c0)+'<span class="mut">'+esc(msg)+'</span>'}
+    else if(p){
+      o='<p><a href="#c-'+p.channel+'">&lt; Back to #'+esc(p.channel)+'</a></p><div class="card"><h2 class="glow" style="margin-top:0">'+esc(p.title)+'</h2><div class="mut">'+esc(p.author)+' • '+esc(p.date)+' • #'+esc(p.channel)+'</div><p>'+inl(p.summary)+'</p>';
+      if(p.req&&p.req.length)o+='<div class="req"><h4 style="margin:0 0 8px">Required homebrew</h4><ul>'+p.req.map(function(r){var u=safe(r.url);return '<li><span>'+esc(r.name)+(r.note?'<small>'+esc(r.note)+'</small>':'')+'</span>'+(u?'<a class="btn" href="'+u+'" target="_blank" rel="noopener">Get it</a>':'')+'</li>'}).join('')+'</ul></div>';
+      o+='<div class="body">'+md(p.body)+'</div>'+(p.notes?'<div class="note"><h3>Notes and troubleshooting</h3>'+md(p.notes)+'</div>':'')+'</div>';
+      if(canMod(p))o+='<button class="b" data-edit="'+esc(p.id)+'">Edit post</button> <button class="b" data-del="'+esc(p.id)+'">Delete post</button> <span class="mut">'+esc(msg)+'</span>';
+    }else{
+      var L=P.filter(function(x){return x.channel===cur});
+      o='<div class="card"><div class="mut">'+esc(ch.cat)+'</div><h3 class="glow"># '+esc(ch.id)+' <span class="tag">'+esc(ch.badge)+'</span></h3><p class="mut" style="margin:0">'+esc(ch.desc)+'</p></div>';
+      o+=L.length?L.map(postCard).join(''):'<div class="card mut">No posts in this channel yet. Check back soon or ask in the Discord.</div>';
+      if(msg)o+='<p class="mut">'+esc(msg)+'</p>';
     }
-  ];
-
-  sampleBrews.forEach(b => {
-    const roles = `<span class="border border-[var(--green)] px-1.5 py-0.5 text-[9px] rounded text-emerald-300 ml-1.5">Core Dev</span>`;
-    const div = document.createElement("div");
-    div.className = "p-4 rounded bg-[var(--bg-card)] glow-box border border-[var(--border)] space-y-2";
-    div.innerHTML = `
-      <div class="flex items-center justify-between text-xs text-emerald-600 border-b border-[var(--border)] pb-2">
-        <div>
-          <span class="font-bold text-[var(--green)]">${b.author}</span>
-          <span class="text-[10px] text-emerald-500/80 ml-1">#[${consoleTag()}]</span>
-          ${roles}
-        </div>
-        <span class="text-[10px]"><i class="fa-regular fa-clock mr-1"></i>${b.date}</span>
-      </div>
-      <h5 class="font-bold text-sm text-[var(--green)] glow-text">${b.title}</h5>
-      <p class="text-xs text-emerald-400/90 leading-relaxed">${b.body}</p>
-      <div class="flex justify-end pt-2">
-        <button onclick="openPostModal()" class="px-3 py-1 border border-[var(--green)] hover:bg-[var(--green)] hover:text-black rounded text-[11px] font-bold transition-all flex items-center space-x-1.5">
-          <span>Reply in Thread</span><i class="fa-solid fa-reply text-[9px]"></i>
-        </button>
-      </div>
-    `;
-    box.appendChild(div);
-  });
-}
-
-/* Dynamic Giscus Integration */
-function reloadGiscus(term) {
-  const container = document.getElementById("giscus_container");
-  container.innerHTML = "";
-
-  const script = document.createElement("script");
-  script.src = "https://giscus.app/client.js";
-  script.setAttribute("data-repo", `${OWNER}/${REPO}`);
-  script.setAttribute("data-repo-id", "R_kgDORLAr5g");
-  script.setAttribute("data-category", "Announcements");
-  script.setAttribute("data-category-id", "DIC_kwDORLAr5s4C2BV8");
-  script.setAttribute("data-mapping", "specific");
-  script.setAttribute("data-term", term);
-  script.setAttribute("data-strict", "1");
-  script.setAttribute("data-reactions-enabled", "1");
-  script.setAttribute("data-emit-metadata", "0");
-  script.setAttribute("data-input-position", "bottom");
-  script.setAttribute("data-theme", "dark");
-  script.setAttribute("data-lang", "en");
-  script.setAttribute("crossorigin", "anonymous");
-  script.async = true;
-
-  container.appendChild(script);
-}
-
-/* New Post Modal Actions */
-function openPostModal() {
-  document.getElementById("modal-channel-display").value = `# ${activeChannel.name}`;
-  document.getElementById("post-modal").classList.remove("hidden");
-}
-
-function closePostModal() {
-  document.getElementById("post-modal").classList.add("hidden");
-  document.getElementById("modal-title").value = "";
-  document.getElementById("modal-body").value = "";
-}
-
-function submitBrewPost() {
-  const title = document.getElementById("modal-title").value.trim();
-  const body = document.getElementById("modal-body").value.trim();
-  if(!title || !body) {
-    alert("Please fill in both title and body for your brew post.");
-    return;
+    $('view').innerHTML=o;side();
   }
-  closePostModal();
-  switchTab('forum');
-  loadDiscussions();
-}
-
-/* Initial Load on Window Launch */
-window.onload = function() {
-  renderSidebar();
-  selectChannel(CATEGORIES[0].channels[0]);
-};
+  document.addEventListener('click',function(e){
+    if(e.target.id==='bd'||e.target.id==='menu'||e.target.closest('a.ch')){var s=$('side').classList;if(e.target.id==='menu')s.add('open');else s.remove('open');$('bd').classList.toggle('open',e.target.id==='menu')}
+    var t=e.target.closest('button');if(!t)return;
+    if(t.dataset.cat!==undefined){col[t.dataset.cat]=!col[t.dataset.cat];side()}
+    if(t.hasAttribute('data-login')){lg=true;msg='';render()}
+    if(t.hasAttribute('data-pw')){pw=true;msg='';render()}
+    if(t.hasAttribute('data-logout')){pw=false;form=null;sb.auth.signOut().then(function(){user=null;me=null;msg='';render()})}
+    if(t.id==='f-no'){lg=false;pw=false;msg='';render()}
+    if(t.hasAttribute('data-new')&&canPost()){form='new';render()}
+    if(t.dataset.edit){form=t.dataset.edit;render()}
+    if(t.id==='f-cancel'){form=null;render()}
+    if(t.id==='f-add')$('f-r').insertAdjacentHTML('beforeend',reqRow());
+    if(t.hasAttribute('data-rm'))t.parentNode.remove();
+    if(t.id==='f-login'){
+      msg='Signing in…';
+      sb.auth.signInWithPassword({email:$('f-e').value.trim(),password:$('f-p').value}).then(function(r){
+        if(r.error){msg='Wrong email or password.';render()}else{lg=false;msg='';user=r.data.user;loadMe()}})
+    }
+    if(t.id==='f-pwsave'){
+      var a=$('f-p').value,b=$('f-p2').value;
+      if(a.length<8){msg='Use at least 8 characters.';render();return}
+      if(a!==b){msg='The passwords do not match.';render();return}
+      sb.auth.updateUser({password:a}).then(function(r){
+        if(r.error){msg='Could not change password: '+r.error.message;render();return}
+        return sb.rpc('mark_password_changed').then(function(){pw=false;msg='Password changed.';return loadMe()})})
+    }
+    if(t.dataset.del){var dp=find(t.dataset.del);if(!dp||!canMod(dp))return;
+      if(delAsk===dp.id){delAsk='';sb.from('posts').delete().eq('id',dp.id).then(function(r){msg=r.error?'Could not delete: '+r.error.message:'';location.hash='c-'+dp.channel;load()})}
+      else{delAsk=dp.id;msg='Click Delete post again to confirm.';render()}}
+    if(t.id==='f-save'&&canPost()){
+      var title=$('f-t').value.trim();if(!title){msg='Add a title first.';render();return}
+      var req=[].map.call(document.querySelectorAll('#f-r .rrow'),function(r){var i=r.querySelectorAll('input');return{name:i[0].value.trim(),url:i[1].value.trim(),note:i[2].value.trim()}}).filter(function(r){return r.name||r.url});
+      var c1=form==='new'?null:find(form),
+      row={channel:$('f-c').value,title:title,author:$('f-a').value.trim()||'BrewStation Team',summary:$('f-s').value.trim(),req:req,body:$('f-b').value,notes:$('f-n').value};
+      msg='Publishing…';
+      var rq=c1?sb.from('posts').update(row).eq('id',c1.id).select().maybeSingle():sb.from('posts').insert(row).select().single();
+      rq.then(function(r){
+        if(r.error||!r.data){msg='Could not save: '+(r.error?r.error.message:'not allowed');render();return}
+        form=null;msg='';load().then(function(){location.hash='p-'+r.data.id})})
+    }
+  });
+  $('q').addEventListener('input',function(){q=this.value;side()});
+  var sel=$('theme'),TH=['green','amber','blue','purple','soft','light'];
+  function setTheme(t){if(TH.indexOf(t)<0)t='green';document.documentElement.setAttribute('data-theme',t);sel.value=t}
+  var sv='green';try{sv=localStorage.getItem('bs-theme')||'green'}catch(e){}
+  setTheme(sv);
+  sel.addEventListener('change',function(){setTheme(sel.value);try{localStorage.setItem('bs-theme',sel.value)}catch(e){}});
+  window.addEventListener('hashchange',function(){form=null;lg=false;msg='';render();$('view').scrollTop=0});
+  render();load();
+  if(sb){
+    sb.auth.getSession().then(function(r){user=r.data.session?r.data.session.user:null;return loadMe()});
+    sb.auth.onAuthStateChange(function(ev,s){user=s?s.user:null;if(ev==='SIGNED_OUT'){me=null;pw=false}setTimeout(function(){if(ev!=='INITIAL_SESSION')loadMe()},0)});
+    sb.channel('posts-live').on('postgres_changes',{event:'*',schema:'public',table:'posts'},function(){load()}).subscribe();
+  }
+})();
 </script>
-
 </body>
 </html>
