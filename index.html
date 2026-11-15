@@ -123,8 +123,18 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
     return o+(ul?'</ul>':'')}
   function find(id){return P.filter(function(g){return g.id===id})[0]}
   function cnt(id){return P.filter(function(p){return p.channel===id}).length}
-  function canPost(){return !!(sb&&user&&me&&!me.must_change)}
-  function canMod(p){return canPost()&&(me.role==='owner'||p.author_id===user.id)}
+  function isStaff(){
+    return !!(user&&me&&!me.must_change&&['owner','admin','mod','moderator'].indexOf(String(me.role||'').toLowerCase())>-1)
+  }
+  function isPlaystationChannel(id){return /^(ps1|ps2|psp|ps3|psv|ps4|ps5|psportal)-/.test(id||'')}
+  function canPost(channel){
+    if(!sb||!user||(me&&me.must_change))return false;
+    if(isStaff())return true;
+    return user.is_anonymous===true&&isPlaystationChannel(channel||cur)
+  }
+  function canMod(p){
+    return !!(p&&user&&((isStaff())||(user.is_anonymous===true&&p.author_id===user.id&&isPlaystationChannel(p.channel))))
+  }
   function load(){
     if(!sb){P=DEMO;render();return Promise.resolve()}
     return sb.from('posts').select('*').order('created_at',{ascending:false}).then(function(r){
@@ -133,6 +143,7 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
   }
   function loadMe(){
     if(!sb||!user){me=null;pw=false;render();return Promise.resolve()}
+    if(user.is_anonymous===true){me=null;render();return Promise.resolve()}
     return sb.from('staff').select('role,must_change').eq('id',user.id).maybeSingle().then(function(r){
       me=r.data||null;
       if(!me){msg='This account is not a staff account.';sb.auth.signOut()}else if(me.must_change)pw=true;
@@ -146,15 +157,24 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
     $('chs').innerHTML=o||'<p class="mut">No channels match.</p>';
     var w='';
     if(!sb)w='<span class="mut">Setup needed</span>';
-    else if(!user||!me)w='<button class="b" data-login>Staff login</button>';
-    else{w='<span class="mut" style="width:100%">'+esc(user.email)+' ('+esc(me.role)+')</span>';
-      if(canPost())w+='<button class="b on" data-new>+ New post</button>';
-      w+='<button class="b" data-pw>Change password</button><button class="b" data-logout>Log out</button>'}
+    else if(!user)w='<span class="mut">Starting guest session…</span><button class="b" data-login>Staff login</button>';
+    else if(user.is_anonymous===true){
+      w='<span class="mut" style="width:100%">Guest visitor</span>';
+      if(canPost(cur))w+='<button class="b on" data-new>+ New post</button>';
+      w+='<button class="b" data-login>Staff login</button>';
+    }else if(me){
+      w='<span class="mut" style="width:100%">'+esc(user.email)+' ('+esc(me.role)+')</span>';
+      if(canPost(cur))w+='<button class="b on" data-new>+ New post</button>';
+      w+='<button class="b" data-pw>Change password</button><button class="b" data-logout>Log out</button>';
+    }else w='<span class="mut">Checking account…</span>';
     $('own').innerHTML=w;
   }
   function reqRow(r){r=r||{};return '<div class="rrow"><input placeholder="Homebrew name" value="'+esc(r.name)+'" aria-label="Name"><input placeholder="https://download-link" value="'+esc(r.url)+'" aria-label="Link"><input placeholder="Note (version, mirror)" value="'+esc(r.note)+'" aria-label="Note"><button type="button" class="b" data-rm>Remove</button></div>'}
-  function chanOpts(v){return CATS.map(function(c){return '<optgroup label="'+esc(c.n)+'">'+c.list.map(function(x){return '<option value="'+x.id+'"'+(x.id===v?' selected':'')+'>#'+x.id+'</option>'}).join('')+'</optgroup>'}).join('')}
-  function formHtml(g){g=g||{req:[{}],author:'BrewStation Team',channel:cur};
+  function chanOpts(v){return CATS.map(function(c){
+    var allowed=c.list.filter(function(x){return canPost(x.id)});
+    return allowed.length?'<optgroup label="'+esc(c.n)+'">'+allowed.map(function(x){return '<option value="'+x.id+'"'+(x.id===v?' selected':'')+'>#'+x.id+'</option>'}).join('')+'</optgroup>':''
+  }).join('')}
+  function formHtml(g){g=g||{req:[{}],author:user&&user.is_anonymous?'Guest':'BrewStation Team',channel:cur};
     return '<div class="card form"><label>Channel<select id="f-c">'+chanOpts(g.channel)+'</select></label>'
     +'<label>Title<input id="f-t" value="'+esc(g.title)+'"></label>'
     +'<label>Author<input id="f-a" value="'+esc(g.author)+'"></label>'
@@ -182,7 +202,7 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
       if(canMod(p))o+='<button class="b" data-edit="'+esc(p.id)+'">Edit post</button> <button class="b" data-del="'+esc(p.id)+'">Delete post</button> <span class="mut">'+esc(msg)+'</span>';
     }else{
       var L=P.filter(function(x){return x.channel===cur});
-      o='<div class="card"><div class="mut">'+esc(ch.cat)+'</div><h3 class="glow"># '+esc(ch.id)+' <span class="tag">'+esc(ch.badge)+'</span></h3><p class="mut" style="margin:0">'+esc(ch.desc)+'</p></div>';
+      o='<div class="card"><div class="mut">'+esc(ch.cat)+'</div><h3 class="glow"># '+esc(ch.id)+' <span class="tag">'+esc(ch.badge)+'</span></h3><p class="mut" style="margin:0">'+esc(ch.desc)+'</p><p class="mut">'+(isPlaystationChannel(ch.id)?'Guests can publish in PlayStation categories.':'Posting is restricted to the owner, admins and moderators.')+'</p></div>';
       o+=L.length?L.map(postCard).join(''):'<div class="card mut">No posts in this channel yet. Check back soon or ask in the Discord.</div>';
       if(msg)o+='<p class="mut">'+esc(msg)+'</p>';
     }
@@ -196,8 +216,8 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
     if(t.hasAttribute('data-pw')){pw=true;msg='';render()}
     if(t.hasAttribute('data-logout')){pw=false;form=null;sb.auth.signOut().then(function(){user=null;me=null;msg='';render()})}
     if(t.id==='f-no'){lg=false;pw=false;msg='';render()}
-    if(t.hasAttribute('data-new')&&canPost()){form='new';render()}
-    if(t.dataset.edit){form=t.dataset.edit;render()}
+    if(t.hasAttribute('data-new')&&canPost(cur)){form='new';render()}
+    if(t.dataset.edit){var ep=find(t.dataset.edit);if(ep&&canPost(ep.channel)){form=t.dataset.edit;render()}}
     if(t.id==='f-cancel'){form=null;render()}
     if(t.id==='f-add')$('f-r').insertAdjacentHTML('beforeend',reqRow());
     if(t.hasAttribute('data-rm'))t.parentNode.remove();
@@ -217,13 +237,13 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
     if(t.dataset.del){var dp=find(t.dataset.del);if(!dp||!canMod(dp))return;
       if(delAsk===dp.id){delAsk='';sb.from('posts').delete().eq('id',dp.id).then(function(r){msg=r.error?'Could not delete: '+r.error.message:'';location.hash='c-'+dp.channel;load()})}
       else{delAsk=dp.id;msg='Click Delete post again to confirm.';render()}}
-    if(t.id==='f-save'&&canPost()){
+    if(t.id==='f-save'&&canPost($('f-c').value)){
       var title=$('f-t').value.trim();if(!title){msg='Add a title first.';render();return}
       var req=[].map.call(document.querySelectorAll('#f-r .rrow'),function(r){var i=r.querySelectorAll('input');return{name:i[0].value.trim(),url:i[1].value.trim(),note:i[2].value.trim()}}).filter(function(r){return r.name||r.url});
       var c1=form==='new'?null:find(form),
       row={channel:$('f-c').value,title:title,author:$('f-a').value.trim()||'BrewStation Team',summary:$('f-s').value.trim(),req:req,body:$('f-b').value,notes:$('f-n').value};
       msg='Publishing…';
-      var rq=c1?sb.from('posts').update(row).eq('id',c1.id).select().maybeSingle():sb.from('posts').insert(row).select().single();
+      var rq=c1?sb.from('posts').update(row).eq('id',c1.id).select().maybeSingle():sb.from('posts').insert(Object.assign({},row,{author_id:user.id})).select().single();
       rq.then(function(r){
         if(r.error||!r.data){msg='Could not save: '+(r.error?r.error.message:'not allowed');render();return}
         form=null;msg='';load().then(function(){location.hash='p-'+r.data.id})})
@@ -238,7 +258,16 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
   window.addEventListener('hashchange',function(){form=null;lg=false;msg='';render();$('view').scrollTop=0});
   render();load();
   if(sb){
-    sb.auth.getSession().then(function(r){user=r.data.session?r.data.session.user:null;return loadMe()});
+    sb.auth.getSession().then(function(r){
+      user=r.data.session?r.data.session.user:null;
+      if(!user){
+        return sb.auth.signInAnonymously().then(function(a){
+          if(a.error){msg='Guest access could not start. Enable Anonymous Sign-Ins in Supabase Authentication settings.';render();return}
+          user=a.data.user;return loadMe()
+        })
+      }
+      return loadMe()
+    });
     sb.auth.onAuthStateChange(function(ev,s){user=s?s.user:null;if(ev==='SIGNED_OUT'){me=null;pw=false}setTimeout(function(){if(ev!=='INITIAL_SESSION')loadMe()},0)});
     sb.channel('posts-live').on('postgres_changes',{event:'*',schema:'public',table:'posts'},function(){load()}).subscribe();
   }
