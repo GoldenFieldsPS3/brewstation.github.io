@@ -62,6 +62,7 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
  #menu{display:inline-block}
  .rrow{grid-template-columns:1fr}
 }
+/*roles*/.chip{display:inline-block;border:1px solid currentColor;border-radius:10px;padding:0 8px;font-size:11px;margin:2px 0}.x{background:none;border:0;color:inherit;cursor:pointer;font:inherit;padding:0 0 0 4px}.perms{display:grid;gap:6px}.perms label{display:flex;gap:8px;font-weight:normal}input[type=checkbox]{width:auto}input[type=color]{padding:2px;height:36px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -93,8 +94,14 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
   var sb=null;
   try{if(SUPABASE_URL.indexOf('YOUR-')<0&&window.supabase)sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY)}catch(e){}
   var $=function(i){return document.getElementById(i)};
-  var P=[],user=null,me=null,form=null,lg=false,pw=false,msg='',delAsk='',q='',col={},cur='announcements';
-  var DEMO=[{id:'demo',channel:'announcements',title:'Site setup needed',author:'BrewStation Team',date:'2026-11-15',summary:'Add your Supabase details to index.html to turn on posts and staff logins.',req:[],body:'## Next step\nFollow the README that came with this site.',notes:'',author_id:null}];
+  var P=[],user=null,form=null,msg='',delAsk='',q='',col={},cur='announcements';
+  var PS=/^(ps1|ps2|psp|ps3|psv|ps4|ps5|psportal)-/;
+  var R=[],PR={},MR=[],perms={},myTop=0,isOwn=false,av=null,mq='';
+  var PERMS=[['post_ps','Write in console channels'],['post_general','Write in community channels'],['moderate','Edit and delete any post'],['manage_roles','Manage members and roles'],['admin','Everything (admin)']];
+  function confirmed(){return !!(user&&user.email_confirmed_at)}
+  function calc(){perms={};isOwn=false;myTop=0;if(!user)return;var pr=PR[user.id];isOwn=!!(pr&&pr.is_owner);R.forEach(function(r){var mine=r.is_default||MR.some(function(m){return m.user_id===user.id&&m.role_id===r.id});if(mine){(r.perms||[]).forEach(function(p){perms[p]=true});if(!r.is_default&&r.pos>myTop)myTop=r.pos}});if(isOwn)myTop=1000}
+  function has(p){return !!(sb&&confirmed()&&(isOwn||perms.admin||perms[p]))}
+  var DEMO=[{id:'demo',channel:'announcements',title:'Site setup needed',author:'BrewStation Team',date:'2026-11-15',summary:'Add your Supabase details to index.html to turn on posts and accounts.',req:[],body:'## Next step\nFollow the README that came with this site.',notes:'',author_id:null}];
   var T={general:['General discussion about {C}.','chat'],homebrew:['Homebrew, tools and apps for {C}.','dev'],emulation:['Emulation and compatibility for {C}.','emu'],help:['Troubleshooting and setup help for {C}.','support'],resources:['Files, guides and tools for {C}.','files'],hardware:['Repairs and hardware mods for {C}.','hardware'],marketplace:['Buy, sell or trade {C} gear and accessories.','trade']};
   var CATS=[
    {n:'GENERAL / COMMUNITY',k:'',c:'',ch:[['announcements','Official news, updates and releases from the BrewStation team.','official'],['rules','Server guidelines, safety and community conduct.','read-first'],['community-videos','Showcases and tutorials from our community.','media'],['wall-of-idiots','Hall of fame for funny soft-brick fails.','fun']]},
@@ -123,31 +130,21 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
     return o+(ul?'</ul>':'')}
   function find(id){return P.filter(function(g){return g.id===id})[0]}
   function cnt(id){return P.filter(function(p){return p.channel===id}).length}
-  function isStaff(){
-    return !!(user&&me&&!me.must_change&&['owner','admin','mod','moderator'].indexOf(String(me.role||'').toLowerCase())>-1)
-  }
-  function isPlaystationChannel(id){return /^(ps1|ps2|psp|ps3|psv|ps4|ps5|psportal)-/.test(id||'')}
-  function canPost(channel){
-    if(!sb||!user||(me&&me.must_change))return false;
-    if(isStaff())return true;
-    return user.is_anonymous===true&&isPlaystationChannel(channel||cur)
-  }
-  function canMod(p){
-    return !!(p&&user&&((isStaff())||(user.is_anonymous===true&&p.author_id===user.id&&isPlaystationChannel(p.channel))))
-  }
+  function canPost(c){return has(PS.test(c||cur)?'post_ps':'post_general')}
+  function canMod(p){return !!(p&&user&&(has('moderate')||(p.author_id===user.id&&canPost(p.channel))))}
+  function topOf(uid){var pr=PR[uid];if(pr&&pr.is_owner)return{name:'Owner',color:'#f1c40f',pos:1000};var best=null;MR.forEach(function(m){if(m.user_id!==uid)return;var r=R.filter(function(x){return x.id===m.role_id})[0];if(r&&(!best||r.pos>best.pos))best=r});return best}
+  function who(uid,name){var t=topOf(uid);return '<b'+(t?' style="color:'+esc(t.color)+'"':'')+'>'+esc(name||'Unknown')+'</b>'+(t?' <span class="chip" style="color:'+esc(t.color)+'">'+esc(t.name)+'</span>':'')}
+  function setMsg(t){msg=t;var a=$('amsg');if(a)a.textContent=t;else render()}
   function load(){
     if(!sb){P=DEMO;render();return Promise.resolve()}
     return sb.from('posts').select('*').order('created_at',{ascending:false}).then(function(r){
       if(r.error){msg='Could not load posts.'}else{P=r.data.map(function(p){p.date=String(p.created_at).slice(0,10);p.req=p.req||[];return p})}
       render()})
   }
-  function loadMe(){
-    if(!sb||!user){me=null;pw=false;render();return Promise.resolve()}
-    if(user.is_anonymous===true){me=null;render();return Promise.resolve()}
-    return sb.from('staff').select('role,must_change').eq('id',user.id).maybeSingle().then(function(r){
-      me=r.data||null;
-      if(!me){msg='This account is not a staff account.';sb.auth.signOut()}else if(me.must_change)pw=true;
-      render()})
+  function loadMeta(){
+    if(!sb)return Promise.resolve();
+    return Promise.all([sb.from('roles').select('*'),sb.from('profiles').select('id,username,is_owner'),sb.from('member_roles').select('*')]).then(function(a){
+      R=a[0].data||[];PR={};(a[1].data||[]).forEach(function(p){PR[p.id]=p});MR=a[2].data||[];calc();render()})
   }
   function side(){
     var o='',f=q.toLowerCase();
@@ -157,119 +154,138 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
     $('chs').innerHTML=o||'<p class="mut">No channels match.</p>';
     var w='';
     if(!sb)w='<span class="mut">Setup needed</span>';
-    else if(!user)w='<span class="mut">Starting guest session…</span><button class="b" data-login>Staff login</button>';
-    else if(user.is_anonymous===true){
-      w='<span class="mut" style="width:100%">Guest visitor</span>';
+    else if(!user)w='<button class="b on" data-signup>Sign up</button><button class="b" data-login>Log in</button>';
+    else{var pr=PR[user.id];
+      w='<span class="mut" style="width:100%">'+(pr?who(user.id,pr.username):esc(user.email))+(confirmed()?'':' • confirm your email to post')+'</span>';
       if(canPost(cur))w+='<button class="b on" data-new>+ New post</button>';
-      w+='<button class="b" data-login>Staff login</button>';
-    }else if(me){
-      w='<span class="mut" style="width:100%">'+esc(user.email)+' ('+esc(me.role)+')</span>';
-      if(canPost(cur))w+='<button class="b on" data-new>+ New post</button>';
-      w+='<button class="b" data-pw>Change password</button><button class="b" data-logout>Log out</button>';
-    }else w='<span class="mut">Checking account…</span>';
+      if(has('manage_roles'))w+='<a class="btn" href="#members">Members and roles</a>';
+      w+='<button class="b" data-pw>Change password</button><button class="b" data-logout>Log out</button>'}
     $('own').innerHTML=w;
   }
   function reqRow(r){r=r||{};return '<div class="rrow"><input placeholder="Homebrew name" value="'+esc(r.name)+'" aria-label="Name"><input placeholder="https://download-link" value="'+esc(r.url)+'" aria-label="Link"><input placeholder="Note (version, mirror)" value="'+esc(r.note)+'" aria-label="Note"><button type="button" class="b" data-rm>Remove</button></div>'}
   function chanOpts(v){return CATS.map(function(c){
-    var allowed=c.list.filter(function(x){return canPost(x.id)});
-    return allowed.length?'<optgroup label="'+esc(c.n)+'">'+allowed.map(function(x){return '<option value="'+x.id+'"'+(x.id===v?' selected':'')+'>#'+x.id+'</option>'}).join('')+'</optgroup>':''
-  }).join('')}
-  function formHtml(g){g=g||{req:[{}],author:user&&user.is_anonymous?'Guest':'BrewStation Team',channel:cur};
+    var ok=c.list.filter(function(x){return canPost(x.id)});
+    return ok.length?'<optgroup label="'+esc(c.n)+'">'+ok.map(function(x){return '<option value="'+x.id+'"'+(x.id===v?' selected':'')+'>#'+x.id+'</option>'}).join('')+'</optgroup>':''}).join('')}
+  function formHtml(g){g=g||{req:[{}],channel:cur};
     return '<div class="card form"><label>Channel<select id="f-c">'+chanOpts(g.channel)+'</select></label>'
     +'<label>Title<input id="f-t" value="'+esc(g.title)+'"></label>'
-    +'<label>Author<input id="f-a" value="'+esc(g.author)+'"></label>'
-    +'<label>Short description<input id="f-s" value="'+esc(g.summary)+'"></label>'
-    +'<div><b>Required homebrew (with links)</b><div id="f-r" style="display:grid;gap:8px;margin:6px 0">'+(g.req&&g.req.length?g.req:[{}]).map(reqRow).join('')+'</div><button type="button" class="b" id="f-add">Add homebrew link</button></div>'
-    +'<label>Content<textarea id="f-b" placeholder="## Step 1: Title&#10;Describe the step&#10;- List item&#10;[link text](https://example.com)">'+esc(g.body)+'</textarea></label>'
-    +'<label>Notes and troubleshooting<textarea id="f-n" style="min-height:90px">'+esc(g.notes)+'</textarea></label>'
+    +'<label>Short description or question<input id="f-s" value="'+esc(g.summary)+'"></label>'
+    +'<div><b>Required homebrew (optional)</b><div id="f-r" style="display:grid;gap:8px;margin:6px 0">'+(g.req&&g.req.length?g.req:[{}]).map(reqRow).join('')+'</div><button type="button" class="b" id="f-add">Add homebrew link</button></div>'
+    +'<label>Content<textarea id="f-b" placeholder="## Heading&#10;Write your guide or question&#10;- List item&#10;[link text](https://example.com)">'+esc(g.body)+'</textarea></label>'
+    +'<label>Notes and troubleshooting (optional)<textarea id="f-n" style="min-height:90px">'+esc(g.notes)+'</textarea></label>'
     +'<div><button class="b on" id="f-save" type="button">Publish post</button> <button class="b" id="f-cancel" type="button">Cancel</button></div>'
-    +'<span class="mut">Use ## for headings, - for lists and [text](url) for links. Posts go live for everyone at once.</span></div>'}
-  function loginHtml(){return '<div class="card form"><h3>Staff login</h3><span class="mut">No account? Ask the owner for a temporary password.</span><label>Email<input id="f-e" type="email" autocomplete="username"></label><label>Password<input id="f-p" type="password" autocomplete="current-password"></label><div><button class="b on" id="f-login" type="button">Log in</button> <button class="b" id="f-no" type="button">Cancel</button></div><span class="mut">'+esc(msg)+'</span></div>'}
-  function pwHtml(){var forced=me&&me.must_change;return '<div class="card form"><h3>'+(forced?'Choose your own password':'Change password')+'</h3>'+(forced?'<span>You signed in with a temporary password. Pick a new one (8+ characters) to continue.</span>':'')+'<label>New password<input id="f-p" type="password" autocomplete="new-password"></label><label>Repeat new password<input id="f-p2" type="password" autocomplete="new-password"></label><div><button class="b on" id="f-pwsave" type="button">Save password</button>'+(forced?'':' <button class="b" id="f-no" type="button">Cancel</button>')+'</div><span class="mut">'+esc(msg)+'</span></div>'}
-  function postCard(p){return '<div class="card"><h3><a href="#p-'+esc(p.id)+'" style="text-decoration:none">'+esc(p.title)+'</a></h3><div class="mut">'+esc(p.author)+' • '+esc(p.date)+(p.req&&p.req.length?' • <span class="tag">'+p.req.length+' required</span>':'')+'</div><p>'+inl(p.summary)+'</p><a class="btn" href="#p-'+esc(p.id)+'">Read</a></div>'}
+    +'<span class="mut" id="amsg">'+esc(msg)+'</span></div>'}
+  function authHtml(){
+    var f=function(id,l,t,ac){return '<label>'+l+'<input id="'+id+'" type="'+t+'" autocomplete="'+ac+'"></label>'},m='<span class="mut" id="amsg">'+esc(msg)+'</span>',x='<button class="b" id="f-no" type="button">Cancel</button>';
+    if(av==='signup')return '<div class="card form"><h3>Create an account</h3><span class="mut">You need an account to post questions or guides.</span>'+f('f-u','Username (3-20 letters, numbers or _)','text','username')+f('f-e','Email','email','email')+f('f-p','Password (8+ characters)','password','new-password')+f('f-p2','Repeat password','password','new-password')+'<div><button class="b on" id="f-signup" type="button">Sign up</button> '+x+'</div>'+m+'</div>';
+    if(av==='pw')return '<div class="card form"><h3>Change password</h3>'+f('f-p','New password (8+ characters)','password','new-password')+f('f-p2','Repeat new password','password','new-password')+'<div><button class="b on" id="f-pwsave" type="button">Save password</button> '+x+'</div>'+m+'</div>';
+    return '<div class="card form"><h3>Log in</h3>'+f('f-e','Email','email','username')+f('f-p','Password','password','current-password')+'<div><button class="b on" id="f-login" type="button">Log in</button> <button class="b" id="f-forgot" type="button">Forgot password</button> '+x+'</div>'+m+'</div>'}
+  function postCard(p){return '<div class="card"><h3><a href="#p-'+esc(p.id)+'" style="text-decoration:none">'+esc(p.title)+'</a></h3><div class="mut">'+who(p.author_id,p.author)+' • '+esc(p.date)+(p.req&&p.req.length?' • <span class="tag">'+p.req.length+' required</span>':'')+'</div><p>'+inl(p.summary)+'</p><a class="btn" href="#p-'+esc(p.id)+'">Read</a></div>'}
+  function chip(r,rm){return '<span class="chip" style="color:'+esc(r.color)+'">'+esc(r.name)+(rm?' <button class="x" data-rmrole="'+rm+'" aria-label="Remove role '+esc(r.name)+'">×</button>':'')+'</span> '}
+  function membersHtml(){
+    if(!has('manage_roles'))return '<div class="card mut">You do not have permission to manage roles.</div>';
+    var asg=R.filter(function(r){return !r.is_default&&r.pos<myTop}).sort(function(a,b){return b.pos-a.pos}),f=mq.toLowerCase();
+    var o='<h3>Members and roles</h3><span class="mut" id="amsg">'+esc(msg)+'</span><input id="mq" placeholder="Search members…" value="'+esc(mq)+'" aria-label="Search members" style="margin:10px 0">';
+    Object.keys(PR).map(function(i){return PR[i]}).filter(function(p){return !f||p.username.toLowerCase().indexOf(f)>-1}).sort(function(a,b){return a.username.localeCompare(b.username)}).slice(0,50).forEach(function(p){
+      var mine=MR.filter(function(m){return m.user_id===p.id}).map(function(m){return R.filter(function(r){return r.id===m.role_id})[0]}).filter(Boolean).sort(function(a,b){return b.pos-a.pos});
+      var can=!p.is_owner||isOwn,add=asg.filter(function(r){return !mine.some(function(x){return x.id===r.id})});
+      o+='<div class="card"><div>'+who(p.id,p.username)+'</div><div style="margin:8px 0">'+mine.map(function(r){return chip(r,can&&!r.is_default&&r.pos<myTop?p.id+'|'+r.id:'')}).join('')+'</div>'
+      +(can&&add.length?'<select id="ar-'+p.id+'" style="width:auto" aria-label="Role to add">'+add.map(function(r){return '<option value="'+r.id+'">'+esc(r.name)+'</option>'}).join('')+'</select> <button class="b" data-addrole="'+p.id+'">Add role</button>':'')+'</div>'});
+    o+='<h3 style="margin-top:28px">Roles</h3>';
+    R.filter(function(r){return !r.is_default}).sort(function(a,b){return b.pos-a.pos}).forEach(function(r){
+      o+='<div class="card">'+chip(r,'')+'<span class="mut">position '+r.pos+' • '+esc((r.perms||[]).join(', ')||'no permissions')+'</span>'+(r.pos<myTop?' <button class="b" data-delrole="'+r.id+'">Delete role</button>':'')+'</div>'});
+    o+='<div class="card form"><h4>Create a role</h4><label>Name<input id="r-n" maxlength="30"></label><label>Colour<input id="r-c" type="color" value="#3498db"></label><label>Position (higher ranks above lower, max '+(myTop-1)+')<input id="r-p" type="number" min="1" max="'+(myTop-1)+'" value="'+Math.min(myTop-1,10)+'"></label><div class="perms"><b>Permissions</b>'
+    +PERMS.filter(function(p){return p[0]!=='admin'||isOwn||perms.admin}).map(function(p){return '<label><input type="checkbox" class="rp" value="'+p[0]+'"> '+esc(p[1])+'</label>'}).join('')+'</div><div><button class="b on" data-mkrole>Create role</button></div></div>';
+    return o}
   function render(){
-    var h=location.hash,p=/^#p-/.test(h)?find(h.slice(3)):null,m=/^#c-(.+)/.exec(h);
+    var h=location.hash,isM=h==='#members',p=/^#p-/.test(h)?find(h.slice(3)):null,m=/^#c-(.+)/.exec(h);
     if(p)cur=p.channel;else if(m&&chan(m[1]))cur=m[1];
     var ch=chan(cur),o='';
-    $('ct').textContent='# '+cur;
-    if(pw&&user&&me)o=pwHtml();
-    else if(lg&&!user)o=loginHtml();
-    else if(form!==null){var c0=form==='new'?null:find(form);o='<h3>'+(c0?'Edit post':'New post')+'</h3>'+formHtml(c0)+'<span class="mut">'+esc(msg)+'</span>'}
+    $('ct').textContent=isM?'Members and roles':'# '+cur;
+    if(av&&(av!=='pw'||user))o=authHtml();
+    else if(form!==null){var c0=form==='new'?null:find(form);o='<h3>'+(c0?'Edit post':'New post')+'</h3>'+formHtml(c0)}
+    else if(isM)o=membersHtml();
     else if(p){
-      o='<p><a href="#c-'+p.channel+'">&lt; Back to #'+esc(p.channel)+'</a></p><div class="card"><h2 class="glow" style="margin-top:0">'+esc(p.title)+'</h2><div class="mut">'+esc(p.author)+' • '+esc(p.date)+' • #'+esc(p.channel)+'</div><p>'+inl(p.summary)+'</p>';
+      o='<p><a href="#c-'+p.channel+'">&lt; Back to #'+esc(p.channel)+'</a></p><div class="card"><h2 class="glow" style="margin-top:0">'+esc(p.title)+'</h2><div class="mut">'+who(p.author_id,p.author)+' • '+esc(p.date)+' • #'+esc(p.channel)+'</div><p>'+inl(p.summary)+'</p>';
       if(p.req&&p.req.length)o+='<div class="req"><h4 style="margin:0 0 8px">Required homebrew</h4><ul>'+p.req.map(function(r){var u=safe(r.url);return '<li><span>'+esc(r.name)+(r.note?'<small>'+esc(r.note)+'</small>':'')+'</span>'+(u?'<a class="btn" href="'+u+'" target="_blank" rel="noopener">Get it</a>':'')+'</li>'}).join('')+'</ul></div>';
       o+='<div class="body">'+md(p.body)+'</div>'+(p.notes?'<div class="note"><h3>Notes and troubleshooting</h3>'+md(p.notes)+'</div>':'')+'</div>';
       if(canMod(p))o+='<button class="b" data-edit="'+esc(p.id)+'">Edit post</button> <button class="b" data-del="'+esc(p.id)+'">Delete post</button> <span class="mut">'+esc(msg)+'</span>';
     }else{
-      var L=P.filter(function(x){return x.channel===cur});
-      o='<div class="card"><div class="mut">'+esc(ch.cat)+'</div><h3 class="glow"># '+esc(ch.id)+' <span class="tag">'+esc(ch.badge)+'</span></h3><p class="mut" style="margin:0">'+esc(ch.desc)+'</p><p class="mut">'+(isPlaystationChannel(ch.id)?'Guests can publish in PlayStation categories.':'Posting is restricted to the owner, admins and moderators.')+'</p></div>';
-      o+=L.length?L.map(postCard).join(''):'<div class="card mut">No posts in this channel yet. Check back soon or ask in the Discord.</div>';
+      var L=P.filter(function(x){return x.channel===cur}),hint=canPost(cur)?'You can post here.':!user?'Sign up or log in to post here.':!confirmed()?'Confirm your email to post.':'Posting here is limited to staff roles.';
+      o='<div class="card"><div class="mut">'+esc(ch.cat)+'</div><h3 class="glow"># '+esc(ch.id)+' <span class="tag">'+esc(ch.badge)+'</span></h3><p class="mut" style="margin:0">'+esc(ch.desc)+'</p><p class="mut">'+hint+'</p></div>';
+      o+=L.length?L.map(postCard).join(''):'<div class="card mut">No posts in this channel yet.</div>';
       if(msg)o+='<p class="mut">'+esc(msg)+'</p>';
     }
     $('view').innerHTML=o;side();
   }
   document.addEventListener('click',function(e){
-    if(e.target.id==='bd'||e.target.id==='menu'||e.target.closest('a.ch')){var s=$('side').classList;if(e.target.id==='menu')s.add('open');else s.remove('open');$('bd').classList.toggle('open',e.target.id==='menu')}
-    var t=e.target.closest('button');if(!t)return;
-    if(t.dataset.cat!==undefined){col[t.dataset.cat]=!col[t.dataset.cat];side()}
-    if(t.hasAttribute('data-login')){lg=true;msg='';render()}
-    if(t.hasAttribute('data-pw')){pw=true;msg='';render()}
-    if(t.hasAttribute('data-logout')){pw=false;form=null;sb.auth.signOut().then(function(){user=null;me=null;msg='';render()})}
-    if(t.id==='f-no'){lg=false;pw=false;msg='';render()}
-    if(t.hasAttribute('data-new')&&canPost(cur)){form='new';render()}
-    if(t.dataset.edit){var ep=find(t.dataset.edit);if(ep&&canPost(ep.channel)){form=t.dataset.edit;render()}}
-    if(t.id==='f-cancel'){form=null;render()}
+    if(e.target.id==='bd'||e.target.id==='menu'||e.target.closest('a.ch,a.btn[href="#members"]')){var s=$('side').classList;if(e.target.id==='menu')s.add('open');else s.remove('open');$('bd').classList.toggle('open',e.target.id==='menu')}
+    var t=e.target.closest('button');if(!t)return;var d=t.dataset;
+    if(d.cat!==undefined){col[d.cat]=!col[d.cat];side()}
+    if(t.hasAttribute('data-login')){av='login';msg='';render()}
+    if(t.hasAttribute('data-signup')){av='signup';msg='';render()}
+    if(t.hasAttribute('data-pw')){av='pw';msg='';render()}
+    if(t.hasAttribute('data-logout')){av=null;form=null;sb.auth.signOut().then(function(){user=null;calc();msg='';render()})}
+    if(t.id==='f-no'){av=null;msg='';render()}
+    if(t.id==='f-login'){setMsg('Signing in…');sb.auth.signInWithPassword({email:$('f-e').value.trim(),password:$('f-p').value}).then(function(r){
+      if(r.error)setMsg(/confirm/i.test(r.error.message)?'Confirm your email first, then log in.':'Wrong email or password.');else{av=null;msg='';user=r.data.user;loadMeta()}})}
+    if(t.id==='f-signup'){
+      var un=$('f-u').value.trim(),em=$('f-e').value.trim(),a=$('f-p').value;
+      if(!/^[A-Za-z0-9_]{3,20}$/.test(un)){setMsg('Username: 3-20 letters, numbers or _.');return}
+      if(!em){setMsg('Enter your email.');return}
+      if(a.length<8){setMsg('Use at least 8 characters.');return}
+      if(a!==$('f-p2').value){setMsg('The passwords do not match.');return}
+      setMsg('Creating account…');
+      sb.auth.signUp({email:em,password:a,options:{data:{username:un},emailRedirectTo:location.origin+location.pathname}}).then(function(r){
+        if(r.error){setMsg('Could not sign up: '+r.error.message);return}
+        if(r.data.session){av=null;msg='';user=r.data.user;loadMeta()}else setMsg('Account created. Check your email to confirm it, then log in.')})}
+    if(t.id==='f-forgot'){var fe=$('f-e').value.trim();if(!fe){setMsg('Type your email first.');return}
+      sb.auth.resetPasswordForEmail(fe,{redirectTo:location.origin+location.pathname}).then(function(r){setMsg(r.error?'Could not send the email: '+r.error.message:'If that email has an account, a reset link is on its way.')})}
+    if(t.id==='f-pwsave'){var a1=$('f-p').value;
+      if(a1.length<8){setMsg('Use at least 8 characters.');return}
+      if(a1!==$('f-p2').value){setMsg('The passwords do not match.');return}
+      sb.auth.updateUser({password:a1}).then(function(r){if(r.error)setMsg('Could not change password: '+r.error.message);else{av=null;msg='Password changed.';render()}})}
+    if(t.hasAttribute('data-new')&&canPost(cur)){form='new';msg='';render()}
+    if(d.edit){var ep=find(d.edit);if(ep&&canMod(ep)){form=d.edit;msg='';render()}}
+    if(t.id==='f-cancel'){form=null;msg='';render()}
     if(t.id==='f-add')$('f-r').insertAdjacentHTML('beforeend',reqRow());
     if(t.hasAttribute('data-rm'))t.parentNode.remove();
-    if(t.id==='f-login'){
-      msg='Signing in…';
-      sb.auth.signInWithPassword({email:$('f-e').value.trim(),password:$('f-p').value}).then(function(r){
-        if(r.error){msg='Wrong email or password.';render()}else{lg=false;msg='';user=r.data.user;loadMe()}})
-    }
-    if(t.id==='f-pwsave'){
-      var a=$('f-p').value,b=$('f-p2').value;
-      if(a.length<8){msg='Use at least 8 characters.';render();return}
-      if(a!==b){msg='The passwords do not match.';render();return}
-      sb.auth.updateUser({password:a}).then(function(r){
-        if(r.error){msg='Could not change password: '+r.error.message;render();return}
-        return sb.rpc('mark_password_changed').then(function(){pw=false;msg='Password changed.';return loadMe()})})
-    }
-    if(t.dataset.del){var dp=find(t.dataset.del);if(!dp||!canMod(dp))return;
+    if(d.del){var dp=find(d.del);if(!dp||!canMod(dp))return;
       if(delAsk===dp.id){delAsk='';sb.from('posts').delete().eq('id',dp.id).then(function(r){msg=r.error?'Could not delete: '+r.error.message:'';location.hash='c-'+dp.channel;load()})}
       else{delAsk=dp.id;msg='Click Delete post again to confirm.';render()}}
-    if(t.id==='f-save'&&canPost($('f-c').value)){
-      var title=$('f-t').value.trim();if(!title){msg='Add a title first.';render();return}
+    if(t.id==='f-save'){
+      var ch=$('f-c').value;if(!canPost(ch)){setMsg('You cannot post in that channel.');return}
+      var title=$('f-t').value.trim();if(!title){setMsg('Add a title first.');return}
       var req=[].map.call(document.querySelectorAll('#f-r .rrow'),function(r){var i=r.querySelectorAll('input');return{name:i[0].value.trim(),url:i[1].value.trim(),note:i[2].value.trim()}}).filter(function(r){return r.name||r.url});
-      var c1=form==='new'?null:find(form),
-      row={channel:$('f-c').value,title:title,author:$('f-a').value.trim()||'BrewStation Team',summary:$('f-s').value.trim(),req:req,body:$('f-b').value,notes:$('f-n').value};
-      msg='Publishing…';
-      var rq=c1?sb.from('posts').update(row).eq('id',c1.id).select().maybeSingle():sb.from('posts').insert(Object.assign({},row,{author_id:user.id})).select().single();
+      var c1=form==='new'?null:find(form),row={channel:ch,title:title,summary:$('f-s').value.trim(),req:req,body:$('f-b').value,notes:$('f-n').value};
+      setMsg('Publishing…');
+      var rq=c1?sb.from('posts').update(row).eq('id',c1.id).select().maybeSingle():sb.from('posts').insert(row).select().single();
       rq.then(function(r){
-        if(r.error||!r.data){msg='Could not save: '+(r.error?r.error.message:'not allowed');render();return}
-        form=null;msg='';load().then(function(){location.hash='p-'+r.data.id})})
-    }
+        if(r.error||!r.data){setMsg('Could not save: '+(r.error?r.error.message:'not allowed'));return}
+        form=null;msg='';load().then(function(){location.hash='p-'+r.data.id})})}
+    if(d.addrole){var sl=$('ar-'+d.addrole);sb.from('member_roles').insert({user_id:d.addrole,role_id:sl.value}).then(function(r){msg=r.error?'Could not add role: '+r.error.message:'Role added.';loadMeta()})}
+    if(d.rmrole){var pr2=d.rmrole.split('|');sb.from('member_roles').delete().eq('user_id',pr2[0]).eq('role_id',pr2[1]).then(function(r){msg=r.error?'Could not remove role: '+r.error.message:'Role removed.';loadMeta()})}
+    if(d.delrole){if(delAsk===d.delrole){delAsk='';sb.from('roles').delete().eq('id',d.delrole).then(function(r){msg=r.error?'Could not delete role: '+r.error.message:'Role deleted.';loadMeta()})}else{delAsk=d.delrole;setMsg('Click Delete role again to confirm.')}}
+    if(t.hasAttribute('data-mkrole')){
+      var nm=$('r-n').value.trim(),clr=$('r-c').value,ps=parseInt($('r-p').value,10),pl=[].filter.call(document.querySelectorAll('.rp'),function(c){return c.checked}).map(function(c){return c.value});
+      if(!nm){setMsg('Give the role a name.');return}
+      if(!(ps>=1&&ps<myTop)){setMsg('Position must be between 1 and '+(myTop-1)+'.');return}
+      sb.from('roles').insert({name:nm,color:clr,pos:ps,perms:pl}).then(function(r){msg=r.error?'Could not create role: '+r.error.message:'Role created.';loadMeta()})}
   });
+  document.addEventListener('input',function(e){if(e.target.id==='mq'){mq=e.target.value;render();var i=$('mq');i.focus();i.setSelectionRange(mq.length,mq.length)}});
   $('q').addEventListener('input',function(){q=this.value;side()});
   var sel=$('theme'),TH=['green','amber','blue','purple','soft','light'];
   function setTheme(t){if(TH.indexOf(t)<0)t='green';document.documentElement.setAttribute('data-theme',t);sel.value=t}
   var sv='green';try{sv=localStorage.getItem('bs-theme')||'green'}catch(e){}
   setTheme(sv);
   sel.addEventListener('change',function(){setTheme(sel.value);try{localStorage.setItem('bs-theme',sel.value)}catch(e){}});
-  window.addEventListener('hashchange',function(){form=null;lg=false;msg='';render();$('view').scrollTop=0});
+  window.addEventListener('hashchange',function(){form=null;if(av!=='pw')av=null;msg='';render();$('view').scrollTop=0});
   render();load();
   if(sb){
-    sb.auth.getSession().then(function(r){
-      user=r.data.session?r.data.session.user:null;
-      if(!user){
-        return sb.auth.signInAnonymously().then(function(a){
-          if(a.error){msg='Guest access could not start. Enable Anonymous Sign-Ins in Supabase Authentication settings.';render();return}
-          user=a.data.user;return loadMe()
-        })
-      }
-      return loadMe()
-    });
-    sb.auth.onAuthStateChange(function(ev,s){user=s?s.user:null;if(ev==='SIGNED_OUT'){me=null;pw=false}setTimeout(function(){if(ev!=='INITIAL_SESSION')loadMe()},0)});
-    sb.channel('posts-live').on('postgres_changes',{event:'*',schema:'public',table:'posts'},function(){load()}).subscribe();
+    sb.auth.getSession().then(function(r){user=r.data.session?r.data.session.user:null;calc();render()});
+    sb.auth.onAuthStateChange(function(ev,s){user=s?s.user:null;if(ev==='SIGNED_OUT')av=null;if(ev==='PASSWORD_RECOVERY')av='pw';setTimeout(function(){calc();render()},0)});
+    loadMeta();
+    sb.channel('live').on('postgres_changes',{event:'*',schema:'public',table:'posts'},load).on('postgres_changes',{event:'*',schema:'public',table:'member_roles'},loadMeta).on('postgres_changes',{event:'*',schema:'public',table:'roles'},loadMeta).on('postgres_changes',{event:'*',schema:'public',table:'profiles'},loadMeta).subscribe();
   }
 })();
 </script>
