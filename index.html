@@ -113,7 +113,7 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
  #menu{display:inline-block}
  .rrow{grid-template-columns:1fr}
 }
-/*roles*/.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}.banner{border:1px solid var(--g);border-radius:6px;padding:8px 12px;margin-bottom:14px}.chip{display:inline-block;border:1px solid currentColor;border-radius:10px;padding:0 8px;font-size:11px;margin:2px 0}.x{background:none;border:0;color:inherit;cursor:pointer;font:inherit;padding:0 0 0 4px}.perms{display:grid;gap:6px}.perms label{display:flex;gap:8px;font-weight:normal}input[type=checkbox]{width:auto}input[type=color]{padding:2px;height:36px}
+.msearch{position:sticky;top:0;z-index:5;display:flex;gap:8px;padding:8px 0;background:var(--bg)}.msearch input{flex:1}.msearch select{width:auto}.rtog{background:none;border:1px solid var(--c);color:var(--c);border-radius:12px;padding:2px 10px;margin:2px;cursor:pointer;font-family:inherit;font-size:12px}.rtog.on{background:var(--c);color:var(--on)}/*roles*/.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}.banner{border:1px solid var(--g);border-radius:6px;padding:8px 12px;margin-bottom:14px}.chip{display:inline-block;border:1px solid currentColor;border-radius:10px;padding:0 8px;font-size:11px;margin:2px 0}.x{background:none;border:0;color:inherit;cursor:pointer;font:inherit;padding:0 0 0 4px}.perms{display:grid;gap:6px}.perms label{display:flex;gap:8px;font-weight:normal}input[type=checkbox]{width:auto}input[type=color]{padding:2px;height:36px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -149,7 +149,7 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
   var $=function(i){return document.getElementById(i)};
   var P=[],user=null,form=null,msg='',delAsk='',q='',col={},cur='announcements';
   var PS=/^(ps1|ps2|psp|ps3|psv|ps4|ps5|psportal)-/;
-  var R=[],PR={},MR=[],perms={},myTop=0,isOwn=false,av=null,mq='',B=[],RP=[],AU=[],AR=[],ST={},at='overview',xc=0,xcFor='';
+  var R=[],PR={},MR=[],perms={},myTop=0,isOwn=false,av=null,mq='',mrf='',ml=25,B=[],RP=[],AU=[],AR=[],AM={},ST={},at='overview',xc=0,xcFor='';
   var PERMS=[['post_ps','Write in console channels'],['post_general','Write in community channels'],['moderate','Edit and delete any post'],['manage_roles','Manage members and roles'],['admin','Everything (admin)']];
   function confirmed(){return !!(user&&user.email_confirmed_at)}
   function calc(){perms={};isOwn=false;myTop=0;if(!user)return;var pr=PR[user.id];isOwn=!!(pr&&pr.is_owner);R.forEach(function(r){var mine=r.is_default||MR.some(function(m){return m.user_id===user.id&&m.role_id===r.id});if(mine){(r.perms||[]).forEach(function(p){perms[p]=true});if(!r.is_default&&r.pos>myTop)myTop=r.pos}});if(isOwn)myTop=1000}
@@ -197,10 +197,11 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
   }
   function loadAdmin(){
     if(!sb||!user)return Promise.resolve();
-    var jobs=[];RP=[];AU=[];AR=[];
+    var jobs=[];RP=[];AU=[];AR=[];AM={};
     if(has('moderate'))jobs.push(sb.from('reports').select('*').order('created_at',{ascending:false}).limit(100).then(function(r){RP=r.data||[]}));
     if(has('admin'))jobs.push(sb.from('audit').select('*').order('created_at',{ascending:false}).limit(100).then(function(r){AU=r.data||[]}));
     if(has('admin'))jobs.push(sb.from('automod_rules').select('*').order('category').then(function(r){AR=r.data||[]}));
+    if(has('admin'))jobs.push(sb.from('post_authors').select('*').then(function(r){(r.data||[]).forEach(function(a){AM[a.post_id]=a.author_id})}));
     return Promise.all(jobs)
   }
   function loadMeta(){
@@ -229,8 +230,9 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
   function chanOpts(v){return CATS.map(function(c){
     var ok=c.list.filter(function(x){return canPost(x.id)});
     return ok.length?'<optgroup label="'+esc(c.n)+'">'+ok.map(function(x){return '<option value="'+x.id+'"'+(x.id===v?' selected':'')+'>#'+x.id+'</option>'}).join('')+'</optgroup>':''}).join('')}
-  function formHtml(g){g=g||{req:[{}],channel:cur};
+  function formHtml(g){var isNew=!g;g=g||{req:[{}],channel:cur};
     return '<div class="card form"><label>Channel<select id="f-c">'+chanOpts(g.channel)+'</select></label>'
+    +(isNew&&has('moderate')?'<label>Post as<select id="f-as"><option value="team" selected>BrewStation Team</option><option value="anon">Anonymous</option><option value="self">My own name ('+esc(PR[user.id]?PR[user.id].username:'me')+')</option></select></label>':'')
     +'<label>Title<input id="f-t" value="'+esc(g.title)+'"></label>'
     +'<label>Short description or question<input id="f-s" value="'+esc(g.summary)+'"></label>'
     +'<div><b>Required homebrew (optional)</b><div id="f-r" style="display:grid;gap:8px;margin:6px 0">'+(g.req&&g.req.length?g.req:[{}]).map(reqRow).join('')+'</div><button type="button" class="b" id="f-add">Add homebrew link</button></div>'
@@ -243,17 +245,22 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
     if(av==='signup')return '<div class="card form"><h3>Create an account</h3><span class="mut">You need an account to post questions or guides.</span>'+f('f-u','Username (3-20 letters, numbers or _)','text','username')+f('f-e','Email','email','email')+f('f-p','Password (8+ characters)','password','new-password')+f('f-p2','Repeat password','password','new-password')+'<div><button class="b on" id="f-signup" type="button">Sign up</button> '+x+'</div>'+m+'</div>';
     if(av==='pw')return '<div class="card form"><h3>Change password</h3>'+f('f-p','New password (8+ characters)','password','new-password')+f('f-p2','Repeat new password','password','new-password')+'<div><button class="b on" id="f-pwsave" type="button">Save password</button> '+x+'</div>'+m+'</div>';
     return '<div class="card form"><h3>Log in</h3>'+f('f-e','Email','email','username')+f('f-p','Password','password','current-password')+'<div><button class="b on" id="f-login" type="button">Log in</button> <button class="b" id="f-forgot" type="button">Forgot password</button> '+x+'</div>'+m+'</div>'}
-  function postCard(p){return '<div class="card"><h3><a href="#p-'+esc(p.id)+'" style="text-decoration:none">'+(p.pinned?'<span class="tag">PINNED</span> ':'')+(p.hidden?'<span class="tag">HELD FOR REVIEW</span> ':'')+esc(p.title)+'</a></h3><div class="mut">'+who(p.author_id,p.author)+' • '+esc(p.date)+(p.req&&p.req.length?' • <span class="tag">'+p.req.length+' required</span>':'')+'</div><p>'+inl(p.summary)+'</p><a class="btn" href="#p-'+esc(p.id)+'">Read</a></div>'}
+  function postCard(p){return '<div class="card"><h3><a href="#p-'+esc(p.id)+'" style="text-decoration:none">'+(p.pinned?'<span class="tag">PINNED</span> ':'')+(p.hidden?'<span class="tag">HELD FOR REVIEW</span> ':'')+esc(p.title)+'</a></h3><div class="mut">'+whoPost(p)+' • '+esc(p.date)+(p.req&&p.req.length?' • <span class="tag">'+p.req.length+' required</span>':'')+'</div><p>'+inl(p.summary)+'</p><a class="btn" href="#p-'+esc(p.id)+'">Read</a></div>'}
   function chip(r,rm){return '<span class="chip" style="color:'+esc(r.color)+'">'+esc(r.name)+(rm?' <button class="x" data-rmrole="'+rm+'" aria-label="Remove role '+esc(r.name)+'">×</button>':'')+'</span> '}
   function membersHtml(){
     if(!has('manage_roles'))return '<div class="card mut">You do not have permission to manage roles.</div>';
     var asg=R.filter(function(r){return !r.is_default&&r.pos<myTop}).sort(function(a,b){return b.pos-a.pos}),f=mq.toLowerCase();
-    var o='<h3>Members and roles</h3><span class="mut" id="amsg">'+esc(msg)+'</span><input id="mq" placeholder="Search members…" value="'+esc(mq)+'" aria-label="Search members" style="margin:10px 0">';
-    Object.keys(PR).map(function(i){return PR[i]}).filter(function(p){return !f||p.username.toLowerCase().indexOf(f)>-1}).sort(function(a,b){return a.username.localeCompare(b.username)}).slice(0,50).forEach(function(p){
-      var mine=MR.filter(function(m){return m.user_id===p.id}).map(function(m){return R.filter(function(r){return r.id===m.role_id})[0]}).filter(Boolean).sort(function(a,b){return b.pos-a.pos});
-      var can=!p.is_owner||isOwn,add=asg.filter(function(r){return !mine.some(function(x){return x.id===r.id})});
-      o+='<div class="card"><div>'+who(p.id,p.username)+'</div><div style="margin:8px 0">'+mine.map(function(r){return chip(r,can&&!r.is_default&&r.pos<myTop?p.id+'|'+r.id:'')}).join('')+'</div>'
-      +(can&&add.length?'<select id="ar-'+p.id+'" style="width:auto" aria-label="Role to add">'+add.map(function(r){return '<option value="'+r.id+'">'+esc(r.name)+'</option>'}).join('')+'</select> <button class="b" data-addrole="'+p.id+'">Add role</button>':'')+banCtl(p)+'</div>'});
+    var all=Object.keys(PR).map(function(i){return PR[i]}),
+    list=all.filter(function(p){return (!f||p.username.toLowerCase().indexOf(f)>-1)&&(!mrf||(mrf==='owner'?p.is_owner:MR.some(function(m){return m.user_id===p.id&&m.role_id===mrf})))}).sort(function(a,b){var x=f&&a.username.toLowerCase().indexOf(f)===0?0:1,y=f&&b.username.toLowerCase().indexOf(f)===0?0:1;return x-y||a.username.localeCompare(b.username)});
+    var o='<h3>Members and roles</h3><span class="mut" id="amsg">'+esc(msg)+'</span><div class="msearch"><input id="mq" type="search" placeholder="Search members by username…" value="'+esc(mq)+'" aria-label="Search members by username"><select id="mrf" aria-label="Filter by role"><option value="">All roles</option>'+R.filter(function(r){return !r.is_default}).sort(function(a,b){return b.pos-a.pos}).map(function(r){return '<option value="'+r.id+'"'+(mrf===r.id?' selected':'')+'>'+esc(r.name)+'</option>'}).join('')+'</select></div><p class="mut">'+list.length+' of '+all.length+' members. Click a role to give it or take it away.</p>';
+    list.slice(0,ml).forEach(function(p){
+      var got=function(r){return MR.some(function(m){return m.user_id===p.id&&m.role_id===r.id})},can=!p.is_owner||isOwn,
+      held=R.filter(function(r){return !r.is_default&&got(r)&&r.pos>=myTop}).sort(function(a,b){return b.pos-a.pos});
+      o+='<div class="card"><div>'+who(p.id,p.username)+'</div><div style="margin:8px 0">'
+      +(can?asg.map(function(r){return '<button class="rtog'+(got(r)?' on':'')+'" style="--c:'+esc(r.color)+'" data-togrole="'+p.id+'|'+r.id+'" aria-pressed="'+got(r)+'">'+esc(r.name)+'</button>'}).join(''):'<span class="mut">Only the Owner can change this member.</span>')
+      +held.map(function(r){return chip(r,'')}).join('')+(asg.length?'':'<span class="mut">No roles you can give yet.</span>')+'</div>'+banCtl(p)+'</div>'});
+    if(!list.length)o+='<div class="card mut">No members match that search.</div>';
+    if(list.length>ml)o+='<button class="b" data-more>Show more ('+(list.length-ml)+' left)</button>';
     o+='<h3 style="margin-top:28px">Roles</h3>';
     R.filter(function(r){return !r.is_default}).sort(function(a,b){return b.pos-a.pos}).forEach(function(r){
       o+='<div class="card">'+chip(r,'')+'<span class="mut">position '+r.pos+' • '+esc((r.perms||[]).join(', ')||'no permissions')+'</span>'+(r.pos<myTop?' <button class="b" data-delrole="'+r.id+'">Delete role</button>':'')+'</div>'});
@@ -267,6 +274,11 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
     var b=activeBan(p.id);
     if(b)return '<div style="margin-top:8px"><span class="chip" style="color:#e74c3c">'+(b.until?'TIMED OUT until '+fmt(b.until):'BANNED')+'</span> <span class="mut">'+esc(b.reason||'')+'</span> <button class="b" data-unban="'+p.id+'">Lift</button></div>';
     return '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><select id="bd-'+p.id+'" style="width:auto" aria-label="Duration"><option value="1">Timeout 1 hour</option><option value="24">Timeout 1 day</option><option value="168">Timeout 7 days</option><option value="perm">Ban permanently</option></select><input id="br-'+p.id+'" placeholder="Reason" maxlength="120" style="flex:1;min-width:140px" aria-label="Reason"><button class="b" data-ban="'+p.id+'">Apply</button></div>'}
+  function whoPost(p){
+    if(p.posted_as==='team')return '<b style="color:#f1c40f">BrewStation Team</b> <span class="chip" style="color:#f1c40f">Staff</span>';
+    if(p.posted_as==='anon')return '<b>Anonymous</b>';
+    return who(p.author_id,p.author)}
+  function realAuthor(p){if(!has('admin')||p.posted_as==='self'||!AM[p.id])return '';var u=PR[AM[p.id]];return '<div class="mut">Posted '+(p.posted_as==='team'?'as the team':'anonymously')+' by '+esc(u?u.username:'unknown')+' (only admins can see this)</div>'}
   function FQ(){return P.filter(function(p){return !p.reviewed})}
   function amNote(p){var mine=user&&p.author_id===user.id;if(!(mine||has('moderate')))return '';var f=p.flags||[];
     if(p.hidden)return '<div class="banner">This post is hidden until a moderator approves it'+(f.length?' (flagged: '+esc(f.join(', '))+')':'')+'. Only you and moderators can see it.</div>';
@@ -288,7 +300,7 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
     o+='<span class="mut" id="amsg">'+esc(msg)+'</span>';
     if(at==='overview'){var st=[['Members',Object.keys(PR).length],['Posts',P.length],['Open reports',open.length],['Active bans and timeouts',B.filter(function(b){return activeBan(b.user_id)===b}).length],['Roles',R.filter(function(r){return !r.is_default}).length]];
       o+='<div class="cards" style="margin-top:12px">'+st.map(function(x){return '<div class="card"><h2 class="glow" style="margin:0">'+x[1]+'</h2><div class="mut">'+x[0]+'</div></div>'}).join('')+'</div>'}
-    if(at==='posts')o+=P.slice(0,60).map(function(p){return '<div class="card"><a href="#p-'+esc(p.id)+'">'+(p.pinned?'[PINNED] ':'')+esc(p.title)+'</a><div class="mut">'+who(p.author_id,p.author)+' • #'+esc(p.channel)+' • '+esc(p.date)+'</div><button class="b" data-pin="'+esc(p.id)+'">'+(p.pinned?'Unpin':'Pin')+'</button> <button class="b" data-pdel="'+esc(p.id)+'">Delete</button></div>'}).join('')||'<div class="card mut">No posts yet.</div>';
+    if(at==='posts')o+=P.slice(0,60).map(function(p){return '<div class="card"><a href="#p-'+esc(p.id)+'">'+(p.pinned?'[PINNED] ':'')+esc(p.title)+'</a><div class="mut">'+whoPost(p)+' • #'+esc(p.channel)+' • '+esc(p.date)+'</div><button class="b" data-pin="'+esc(p.id)+'">'+(p.pinned?'Unpin':'Pin')+'</button> <button class="b" data-pdel="'+esc(p.id)+'">Delete</button></div>'}).join('')||'<div class="card mut">No posts yet.</div>';
     if(at==='reports')o+=RP.map(function(r){var p=find(r.post_id),rep=PR[r.reporter_id];return '<div class="card"><div class="mut">'+fmt(r.created_at)+' • reported by '+esc(rep?rep.username:'unknown')+' • '+esc(r.status)+'</div>'+(p?'<a href="#p-'+esc(p.id)+'">'+esc(p.title)+'</a> <span class="mut">by '+esc(p.author)+'</span>':'<span class="mut">Post already deleted</span>')+'<p>'+esc(r.reason||'No reason given')+'</p>'+(r.status==='open'?'<button class="b" data-rs="'+r.id+'|resolved">Mark resolved</button> <button class="b" data-rs="'+r.id+'|dismissed">Dismiss</button> ':'')+(p?'<button class="b" data-pdel="'+esc(p.id)+'">Delete post</button>':'')+'</div>'}).join('')||'<div class="card mut">No reports. All quiet.</div>';
     if(at==='automod')o+=amHtml();
     if(at==='audit')o+=AU.map(function(a){return '<div class="card"><span class="mut">'+fmt(a.created_at)+'</span> <b>'+esc(a.actor||'system')+'</b> '+esc(a.action)+' <b>'+esc(a.target||'')+'</b><div class="mut">'+esc(a.detail||'')+'</div></div>'}).join('')||'<div class="card mut">Nothing logged yet.</div>';
@@ -318,7 +330,7 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
     else if(isA)o=adminHtml();
     else if(isM)o=membersHtml();
     else if(p){
-      o='<p><a href="#c-'+p.channel+'">&lt; Back to #'+esc(p.channel)+'</a></p><div class="card"><h2 class="glow" style="margin-top:0">'+esc(p.title)+'</h2><div class="mut">'+who(p.author_id,p.author)+' • '+esc(p.date)+' • #'+esc(p.channel)+'</div><p>'+inl(p.summary)+'</p>'+amNote(p);
+      o='<p><a href="#c-'+p.channel+'">&lt; Back to #'+esc(p.channel)+'</a></p><div class="card"><h2 class="glow" style="margin-top:0">'+esc(p.title)+'</h2><div class="mut">'+whoPost(p)+' • '+esc(p.date)+' • #'+esc(p.channel)+'</div><p>'+inl(p.summary)+'</p>'+amNote(p)+realAuthor(p);
       if(p.req&&p.req.length)o+='<div class="req"><h4 style="margin:0 0 8px">Required homebrew</h4><ul>'+p.req.map(function(r){var u=safe(r.url);return '<li><span>'+esc(r.name)+(r.note?'<small>'+esc(r.note)+'</small>':'')+'</span>'+(u?'<a class="btn" href="'+u+'" target="_blank" rel="noopener">Get it</a>':'')+'</li>'}).join('')+'</ul></div>';
       o+='<div class="body">'+md(p.body)+'</div>'+(p.notes?'<div class="note"><h3>Notes and troubleshooting</h3>'+md(p.notes)+'</div>':'')+'</div>';
       if(canMod(p))o+='<button class="b" data-edit="'+esc(p.id)+'">Edit post</button> <button class="b" data-del="'+esc(p.id)+'">Delete post</button> <span class="mut">'+esc(msg)+'</span>';
@@ -389,11 +401,14 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
       var title=$('f-t').value.trim();if(!title){setMsg('Add a title first.');return}
       var req=[].map.call(document.querySelectorAll('#f-r .rrow'),function(r){var i=r.querySelectorAll('input');return{name:i[0].value.trim(),url:i[1].value.trim(),note:i[2].value.trim()}}).filter(function(r){return r.name||r.url});
       var c1=form==='new'?null:find(form),row={channel:ch,title:title,summary:$('f-s').value.trim(),req:req,body:$('f-b').value,notes:$('f-n').value};
+      if(!c1)row.posted_as=($('f-as')&&has('moderate'))?$('f-as').value:'self';
       setMsg('Publishing…');
       var rq=c1?sb.from('posts').update(row).eq('id',c1.id).select().maybeSingle():sb.from('posts').insert(row).select().single();
       rq.then(function(r){
         if(r.error||!r.data){setMsg('Could not save: '+(r.error?r.error.message:'not allowed'));return}
         form=null;msg='';load().then(function(){location.hash='p-'+r.data.id})})}
+    if(d.togrole){var tp=d.togrole.split('|'),on=MR.some(function(m){return m.user_id===tp[0]&&m.role_id===tp[1]});(on?sb.from('member_roles').delete().eq('user_id',tp[0]).eq('role_id',tp[1]):sb.from('member_roles').insert({user_id:tp[0],role_id:tp[1]})).then(function(r){msg=r.error?'Could not change role: '+r.error.message:'';loadMeta()})}
+    if(t.hasAttribute('data-more')){ml+=25;render()}
     if(d.addrole){var sl=$('ar-'+d.addrole);sb.from('member_roles').insert({user_id:d.addrole,role_id:sl.value}).then(function(r){msg=r.error?'Could not add role: '+r.error.message:'Role added.';loadMeta()})}
     if(d.rmrole){var pr2=d.rmrole.split('|');sb.from('member_roles').delete().eq('user_id',pr2[0]).eq('role_id',pr2[1]).then(function(r){msg=r.error?'Could not remove role: '+r.error.message:'Role removed.';loadMeta()})}
     if(d.delrole){if(delAsk===d.delrole){delAsk='';sb.from('roles').delete().eq('id',d.delrole).then(function(r){msg=r.error?'Could not delete role: '+r.error.message:'Role deleted.';loadMeta()})}else{delAsk=d.delrole;setMsg('Click Delete role again to confirm.')}}
@@ -403,7 +418,7 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
       if(!(ps>=1&&ps<myTop)){setMsg('Position must be between 1 and '+(myTop-1)+'.');return}
       sb.from('roles').insert({name:nm,color:clr,pos:ps,perms:pl}).then(function(r){msg=r.error?'Could not create role: '+r.error.message:'Role created.';loadMeta()})}
   });
-  document.addEventListener('input',function(e){if(e.target.id==='mq'){mq=e.target.value;render();var i=$('mq');i.focus();i.setSelectionRange(mq.length,mq.length)}});
+  document.addEventListener('input',function(e){var id=e.target.id;if(id==='mq'){mq=e.target.value;ml=25;render();var i=$('mq');i.focus();i.setSelectionRange(mq.length,mq.length)}if(id==='mrf'){mrf=e.target.value;ml=25;render()}});
   $('q').addEventListener('input',function(){q=this.value;side()});
   var sel=$('theme'),TH=['green','amber','blue','purple','soft','light','ocean','forest','lavender','rose','sky','mint','peach','slate','mono','sand'];
   function setTheme(t){if(TH.indexOf(t)<0)t='green';document.documentElement.setAttribute('data-theme',t);sel.value=t}
