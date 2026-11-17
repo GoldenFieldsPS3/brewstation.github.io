@@ -1,16 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-skin="classic">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BrewStation – PlayStation homebrew and modding hub</title>
 <style>
-:root{--g:#00ff66;--bg:#020402;--side:#050b05;--card:#040d06;--bd:#0a3f1e;--dim:#1fa85a;--on:#000;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--g:#00ff66;--bg:#020402;--side:color-mix(in srgb,var(--g) 5%,var(--bg));--card:color-mix(in srgb,var(--g) 4%,var(--bg));--bd:color-mix(in srgb,var(--g) 25%,var(--bg));--dim:color-mix(in srgb,var(--g) 65%,var(--bg));--on:var(--bg);color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 :root[data-theme="amber"]{--g:#ffb000;--bg:#040300;--side:#0b0800;--card:#0a0700;--bd:#4a3300;--dim:#b07a00}
 :root[data-theme="blue"]{--g:#4fc3ff;--bg:#02060a;--side:#050c12;--card:#040a10;--bd:#0d3550;--dim:#2a8abf}
 :root[data-theme="purple"]{--g:#c792ff;--bg:#06030a;--side:#0b0612;--card:#09050f;--bd:#3a2260;--dim:#8a62c4}
 :root[data-theme="soft"]{--g:#c9d1d9;--bg:#14161a;--side:#181b20;--card:#1b1e24;--bd:#2d333b;--dim:#8b949e;--on:#14161a}
 :root[data-theme="light"]{--g:#14532d;--bg:#f6f7f2;--side:#eaefe9;--card:#fff;--bd:#bfd3c6;--dim:#4d6b58;--on:#fff;color-scheme:light}
+/*themes and layouts*/
+:root[data-theme="ocean"]{--g:#5fd1c9;--bg:#06161a}
+:root[data-theme="forest"]{--g:#8fcf9a;--bg:#0b150e}
+:root[data-theme="lavender"]{--g:#c3b6ff;--bg:#121022}
+:root[data-theme="rose"]{--g:#f2a7be;--bg:#1a0f14}
+:root[data-theme="sky"]{--g:#8ec9ff;--bg:#0a1520}
+:root[data-theme="mint"]{--g:#9fe3c8;--bg:#0a1612}
+:root[data-theme="peach"]{--g:#ffb999;--bg:#1a1210}
+:root[data-theme="slate"]{--g:#b8c4d4;--bg:#161b22}
+:root[data-theme="mono"]{--g:#d8d8d8;--bg:#111}
+:root[data-theme="sand"]{--g:#5c4a2a;--bg:#f5efe3;color-scheme:light}
+:root:not([data-theme="green"]):not([data-theme="amber"]):not([data-theme="blue"]):not([data-theme="purple"]) body::after{display:none}
+:root[data-skin="xmb"]{--g:#eaf0ff;--bg:#0b1030;--side:#10183f;--card:rgba(255,255,255,.07);--bd:rgba(255,255,255,.18);--dim:#9fb0e6;--on:#0b1030;--wave:rgba(120,150,255,.35);--sbg:linear-gradient(160deg,#1c2f78,#0b1030 70%)}
+:root[data-skin="psp"]{--g:#f2fbff;--bg:#0a3d56;--side:#0d4a69;--card:rgba(255,255,255,.1);--bd:rgba(255,255,255,.25);--dim:#a6dcec;--on:#0a3d56;--wave:rgba(120,230,230,.35);--sbg:linear-gradient(160deg,#17859c,#0a3d56 70%)}
+:root[data-skin="ps4"]{--g:#f4f7ff;--bg:#0a1a3a;--side:#0d2250;--card:rgba(255,255,255,.08);--bd:rgba(255,255,255,.2);--dim:#8fb2ec;--on:#0a1a3a;--wave:transparent;--sbg:linear-gradient(150deg,#12397f,#091533 75%)}
+:root[data-skin="ps5"]{--g:#fff;--bg:#0b0d17;--side:#10131f;--card:rgba(255,255,255,.06);--bd:rgba(255,255,255,.14);--dim:#9aa4c4;--on:#0b0d17;--wave:transparent;--sbg:radial-gradient(ellipse at 50% -10%,#27336b,#0b0d17 60%)}
+:root[data-skin="vita"]{--g:#16324f;--bg:#dcecf8;--side:#cfe3f3;--card:rgba(255,255,255,.7);--bd:rgba(22,50,79,.2);--dim:#4d6d8c;--on:#fff;--wave:rgba(255,255,255,.6);--sbg:linear-gradient(160deg,#f3fbff,#c4dff2 80%);color-scheme:light}
+#nav2,.own2,#bgfx{display:none}
+.own2{gap:6px;align-items:center;flex-wrap:wrap}
+.top{flex-wrap:wrap}
+:root:not([data-skin="classic"]) body{font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+:root:not([data-skin="classic"]) body::after{display:none}
+:root:not([data-skin="classic"]) aside,:root:not([data-skin="classic"]) #menu,:root:not([data-skin="classic"]) #theme{display:none}
+:root:not([data-skin="classic"]) #nav2{display:block}
+:root:not([data-skin="classic"]) .own2{display:flex}
+:root:not([data-skin="classic"]) .top,:root:not([data-skin="classic"]) .status{background:transparent}
+:root:not([data-skin="classic"]) .card{backdrop-filter:blur(6px);border-radius:10px}
+:root:not([data-skin="classic"]) #bgfx{display:block;position:fixed;inset:0;z-index:-1;background:var(--sbg);overflow:hidden}
+#bgfx::before,#bgfx::after{content:"";position:absolute;left:-25%;width:150%;height:55%;border-radius:50%;background:radial-gradient(ellipse at center,var(--wave),transparent 68%);animation:sway 16s ease-in-out infinite alternate}
+#bgfx::before{bottom:-18%}#bgfx::after{bottom:-32%;animation-duration:22s;animation-delay:-6s}
+@keyframes sway{from{transform:translateX(-7%) rotate(-3deg)}to{transform:translateX(7%) rotate(3deg)}}
+.xc{display:flex;gap:26px;overflow-x:auto;padding:16px 24px 6px}
+.xcat{flex:none;display:grid;justify-items:center;gap:6px;min-width:70px;background:none;border:0;color:var(--dim);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;opacity:.75;transition:transform .2s}
+.xcat.on{opacity:1;color:var(--g);transform:scale(1.18)}
+.xic{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;border:2px solid currentColor;font-weight:700;font-size:13px;box-shadow:0 0 18px rgba(255,255,255,.18)}
+:root[data-skin="psp"] .xic{border-radius:12px;background:linear-gradient(160deg,rgba(255,255,255,.35),rgba(255,255,255,.05))}
+.xi{display:flex;flex-direction:column;padding:4px 24px 10px;max-height:34vh;overflow-y:auto}
+.xit{display:flex;gap:12px;align-items:baseline;padding:6px 12px;text-decoration:none;color:var(--dim);border-left:3px solid transparent;border-radius:0 6px 6px 0}
+.xit b{color:var(--g);font-weight:600}.xit small{flex:1;opacity:.8}.xit i{font-style:normal;font-size:11px;border:1px solid currentColor;border-radius:8px;padding:0 6px}
+.xit.on,.xit:hover{background:rgba(255,255,255,.12);border-left-color:var(--g)}
+.tabs2{display:flex;gap:20px;padding:12px 24px 0;overflow-x:auto}
+.tabs2 button{flex:none;background:none;border:0;border-bottom:3px solid transparent;color:var(--dim);font:600 15px "Segoe UI",Roboto,Arial,sans-serif;padding:6px 2px;cursor:pointer}
+.tabs2 button.on{color:var(--g);border-bottom-color:var(--g)}
+.tiles{display:flex;gap:14px;padding:16px 24px;overflow-x:auto}
+.tile{flex:none;width:150px;height:150px;display:grid;align-content:space-between;padding:12px;border-radius:4px;text-decoration:none;color:#fff;border:2px solid transparent;background:linear-gradient(135deg,hsl(var(--h) 60% 40%),hsl(var(--h) 55% 22%));transition:transform .15s}
+.tile.on,.tile:hover{border-color:#fff;transform:scale(1.06);box-shadow:0 8px 28px rgba(0,0,0,.4)}
+.ti{font-weight:800;font-size:30px;line-height:1;opacity:.92}.tile b{font-size:13px;font-weight:600;word-break:break-word}.tile i{font-style:normal;font-size:11px;opacity:.85}
+:root[data-skin="ps5"] .tile{width:220px;height:124px;border-radius:18px;background:linear-gradient(135deg,hsl(var(--h) 45% 30%),hsl(var(--h) 40% 14%))}
+:root[data-skin="vita"] .tiles{flex-wrap:wrap;justify-content:center;overflow:visible}
+:root[data-skin="vita"] .tile{width:112px;height:112px;border-radius:50%;text-align:center;place-content:center;gap:2px;border:3px solid rgba(255,255,255,.9);background:radial-gradient(circle at 30% 25%,hsl(var(--h) 80% 75%),hsl(var(--h) 65% 48%))}
+:root[data-skin="vita"] .ti{font-size:26px}
 *,*::before,*::after{box-sizing:inherit}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--g);font:14px/1.55 "Courier New",Courier,monospace;display:flex;overflow:hidden}
@@ -67,6 +118,7 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
 </style>
 </head>
 <body>
+<div id="bgfx"></div>
 <div id="bd"></div>
 <aside id="side">
   <div class="brand"><b class="glow">BREWSTATION</b><small>PlayStation homebrew hub</small></div>
@@ -78,8 +130,9 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
   <header class="top">
     <button class="b" id="menu" aria-label="Open channels">☰</button>
     <h2 id="ct" class="glow"># announcements</h2>
-    <select id="theme" aria-label="Color theme"><option value="green">Theme: Green</option><option value="amber">Amber</option><option value="blue">Blue</option><option value="purple">Purple</option><option value="soft">Soft grey</option><option value="light">Light</option></select>
+    <div id="own2" class="own2"></div><select id="skin" aria-label="Layout"><option value="classic">Layout: Classic</option><option value="xmb">Cross-bar (PS3 style)</option><option value="psp">Handheld bar (PSP style)</option><option value="ps4">Tiles (PS4 style)</option><option value="ps5">Home (PS5 style)</option><option value="vita">Bubbles (Vita style)</option></select><select id="theme" aria-label="Color theme"><option value="green">Theme: Green</option><option value="amber">Amber</option><option value="blue">Blue</option><option value="purple">Purple</option><option value="soft">Soft grey</option><option value="light">Light</option><option value="ocean">Ocean</option><option value="forest">Forest</option><option value="lavender">Lavender</option><option value="rose">Rose</option><option value="sky">Sky</option><option value="mint">Mint</option><option value="peach">Peach</option><option value="slate">Slate</option><option value="mono">Mono</option><option value="sand">Sand (light)</option></select>
   </header>
+  <nav id="nav2" aria-label="Channels"></nav>
   <div class="view" id="view"></div>
   <footer class="status">
     <span>BrewStation • Not affiliated with Sony Interactive Entertainment. Use only on hardware you own. Modding can brick your console.</span>
@@ -96,7 +149,7 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
   var $=function(i){return document.getElementById(i)};
   var P=[],user=null,form=null,msg='',delAsk='',q='',col={},cur='announcements';
   var PS=/^(ps1|ps2|psp|ps3|psv|ps4|ps5|psportal)-/;
-  var R=[],PR={},MR=[],perms={},myTop=0,isOwn=false,av=null,mq='',B=[],RP=[],AU=[],AR=[],ST={},at='overview';
+  var R=[],PR={},MR=[],perms={},myTop=0,isOwn=false,av=null,mq='',B=[],RP=[],AU=[],AR=[],ST={},at='overview',xc=0,xcFor='';
   var PERMS=[['post_ps','Write in console channels'],['post_general','Write in community channels'],['moderate','Edit and delete any post'],['manage_roles','Manage members and roles'],['admin','Everything (admin)']];
   function confirmed(){return !!(user&&user.email_confirmed_at)}
   function calc(){perms={};isOwn=false;myTop=0;if(!user)return;var pr=PR[user.id];isOwn=!!(pr&&pr.is_owner);R.forEach(function(r){var mine=r.is_default||MR.some(function(m){return m.user_id===user.id&&m.role_id===r.id});if(mine){(r.perms||[]).forEach(function(p){perms[p]=true});if(!r.is_default&&r.pos>myTop)myTop=r.pos}});if(isOwn)myTop=1000}
@@ -168,9 +221,9 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
       w='<span class="mut" style="width:100%">'+(pr?who(user.id,pr.username):esc(user.email))+(confirmed()?'':' • confirm your email to post')+'</span>';
       if(canPost(cur))w+='<button class="b on" data-new>+ New post</button>';
       if(has('manage_roles'))w+='<a class="btn" href="#members">Members and roles</a>';
-      if(has('moderate'))w+='<a class="btn" href="#admin">Admin panel</a>';
+      if(has('moderate'))w+='<a class="btn" href="#admin">Admin panel'+(FQ().length?' ('+FQ().length+')':'')+'</a>';
       w+='<button class="b" data-pw>Change password</button><button class="b" data-logout>Log out</button>'}
-    $('own').innerHTML=w;
+    $('own').innerHTML=w;$('own2').innerHTML=w;
   }
   function reqRow(r){r=r||{};return '<div class="rrow"><input placeholder="Homebrew name" value="'+esc(r.name)+'" aria-label="Name"><input placeholder="https://download-link" value="'+esc(r.url)+'" aria-label="Link"><input placeholder="Note (version, mirror)" value="'+esc(r.note)+'" aria-label="Note"><button type="button" class="b" data-rm>Remove</button></div>'}
   function chanOpts(v){return CATS.map(function(c){
@@ -214,12 +267,12 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
     var b=activeBan(p.id);
     if(b)return '<div style="margin-top:8px"><span class="chip" style="color:#e74c3c">'+(b.until?'TIMED OUT until '+fmt(b.until):'BANNED')+'</span> <span class="mut">'+esc(b.reason||'')+'</span> <button class="b" data-unban="'+p.id+'">Lift</button></div>';
     return '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><select id="bd-'+p.id+'" style="width:auto" aria-label="Duration"><option value="1">Timeout 1 hour</option><option value="24">Timeout 1 day</option><option value="168">Timeout 7 days</option><option value="perm">Ban permanently</option></select><input id="br-'+p.id+'" placeholder="Reason" maxlength="120" style="flex:1;min-width:140px" aria-label="Reason"><button class="b" data-ban="'+p.id+'">Apply</button></div>'}
-  function FQ(){return P.filter(function(p){return p.flags&&p.flags.length&&!p.reviewed})}
+  function FQ(){return P.filter(function(p){return !p.reviewed})}
   function amNote(p){var mine=user&&p.author_id===user.id;if(!(mine||has('moderate')))return '';var f=p.flags||[];
-    if(p.hidden)return '<div class="banner">This post is hidden while moderators review it ('+esc(f.join(', '))+'). Only you and moderators can see it.</div>';
-    if(f.length&&!p.reviewed)return '<div class="banner">Automod flagged this post for review ('+esc(f.join(', '))+').</div>';return ''}
+    if(p.hidden)return '<div class="banner">This post is hidden until a moderator approves it'+(f.length?' (flagged: '+esc(f.join(', '))+')':'')+'. Only you and moderators can see it.</div>';
+    if(!p.reviewed)return '<div class="banner">This post is waiting for moderator review.</div>';return ''}
   function amHtml(){
-    var o='<h3>Flagged posts</h3>'+(FQ().map(function(p){return '<div class="card"><a href="#p-'+esc(p.id)+'">'+esc(p.title)+'</a> <span class="mut">by '+esc(p.author)+' in #'+esc(p.channel)+'</span><div style="margin:6px 0">'+(p.hidden?'<span class="tag">HIDDEN</span> ':'<span class="tag">VISIBLE</span> ')+(p.flags||[]).map(function(f){return '<span class="chip">'+esc(f)+'</span>'}).join(' ')+'</div><button class="b" data-approve="'+esc(p.id)+'">Approve</button> <button class="b" data-pdel="'+esc(p.id)+'">Delete post</button></div>'}).join('')||'<div class="card mut">Nothing waiting for review.</div>');
+    var o='<h3>Flagged posts</h3>'+(FQ().map(function(p){return '<div class="card"><a href="#p-'+esc(p.id)+'">'+esc(p.title)+'</a> <span class="mut">by '+esc(p.author)+' in #'+esc(p.channel)+'</span><div style="margin:6px 0">'+(p.hidden?'<span class="tag">HIDDEN</span> ':'<span class="tag">VISIBLE</span> ')+(p.flags&&p.flags.length?p.flags.map(function(f){return '<span class="chip">'+esc(f)+'</span>'}).join(' '):'<span class="chip">awaiting approval</span>')+'</div><button class="b" data-approve="'+esc(p.id)+'">Approve</button> <button class="b" data-pdel="'+esc(p.id)+'">Delete post</button></div>'}).join('')||'<div class="card mut">Nothing waiting for review.</div>');
     if(!has('admin'))return o;
     o+='<h3 style="margin-top:24px">Automod rules</h3><p class="mut">Posts matching a rule are flagged. Hate, threat, doxxing, NSFW and malicious matches are hidden until a moderator approves them. Malicious matches also ban the poster. Moderators and above are never scanned.</p>'
     +'<div class="card form"><label>Category<select id="ru-c">'+['hate','threat','dox','nsfw','malicious','advertising','sensitive','spam'].map(function(c){return '<option>'+c+'</option>'}).join('')+'</select></label><label>Word or phrase<input id="ru-w" maxlength="60"></label><label style="display:flex;gap:8px;font-weight:normal"><input type="checkbox" id="ru-s" style="width:auto"> Also catch spaced-out or symbol versions (letters only)</label><div><button class="b on" data-ruleadd>Add rule</button></div></div>';
@@ -239,11 +292,25 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
     if(at==='reports')o+=RP.map(function(r){var p=find(r.post_id),rep=PR[r.reporter_id];return '<div class="card"><div class="mut">'+fmt(r.created_at)+' • reported by '+esc(rep?rep.username:'unknown')+' • '+esc(r.status)+'</div>'+(p?'<a href="#p-'+esc(p.id)+'">'+esc(p.title)+'</a> <span class="mut">by '+esc(p.author)+'</span>':'<span class="mut">Post already deleted</span>')+'<p>'+esc(r.reason||'No reason given')+'</p>'+(r.status==='open'?'<button class="b" data-rs="'+r.id+'|resolved">Mark resolved</button> <button class="b" data-rs="'+r.id+'|dismissed">Dismiss</button> ':'')+(p?'<button class="b" data-pdel="'+esc(p.id)+'">Delete post</button>':'')+'</div>'}).join('')||'<div class="card mut">No reports. All quiet.</div>';
     if(at==='automod')o+=amHtml();
     if(at==='audit')o+=AU.map(function(a){return '<div class="card"><span class="mut">'+fmt(a.created_at)+'</span> <b>'+esc(a.actor||'system')+'</b> '+esc(a.action)+' <b>'+esc(a.target||'')+'</b><div class="mut">'+esc(a.detail||'')+'</div></div>'}).join('')||'<div class="card mut">Nothing logged yet.</div>';
-    if(at==='settings')o+='<div class="card form"><label>Site banner (shown to everyone, leave empty for none)<input id="s-b" maxlength="200" value="'+esc(ST.banner||'')+'"></label><label style="display:flex;gap:8px;font-weight:normal"><input type="checkbox" id="s-l" style="width:auto"'+(ST.lockdown?' checked':'')+'> Lockdown: only moderators and above can post</label><div><button class="b on" data-savesettings>Save settings</button></div></div>';
+    if(at==='settings')o+='<div class="card form"><label>Site banner (shown to everyone, leave empty for none)<input id="s-b" maxlength="200" value="'+esc(ST.banner||'')+'"></label><label style="display:flex;gap:8px;font-weight:normal"><input type="checkbox" id="s-l" style="width:auto"'+(ST.lockdown?' checked':'')+'> Lockdown: only moderators and above can post</label><label style="display:flex;gap:8px;font-weight:normal"><input type="checkbox" id="s-a" style="width:auto"'+(ST.approval?' checked':'')+'> Hold every new or edited member post until a moderator approves it</label><div><button class="b on" data-savesettings>Save settings</button></div></div>';
     return o}
+  function skin(){return document.documentElement.getAttribute('data-skin')||'classic'}
+  function nav2(){
+    var sk=skin(),el=$('nav2');if(!el)return;
+    if(sk==='classic'){el.innerHTML='';return}
+    var c=CATS[xc]||CATS[0],o='';
+    if(sk==='xmb'||sk==='psp'){
+      o='<div class="xc">'+CATS.map(function(k,i){return '<button class="xcat'+(i===xc?' on':'')+'" data-xc="'+i+'"><span class="xic">'+esc((k.c||'HUB').replace('PS ','').slice(0,4))+'</span><span>'+esc(k.c||'Community')+'</span></button>'}).join('')+'</div><div class="xi">'+c.list.map(function(x){var n=cnt(x.id);return '<a class="xit'+(x.id===cur?' on':'')+'" href="#c-'+x.id+'"><b>'+esc(x.id)+'</b><small>'+esc(x.desc)+'</small>'+(n?'<i>'+n+'</i>':'')+'</a>'}).join('')+'</div>';
+    }else{
+      o='<div class="tabs2">'+CATS.map(function(k,i){return '<button class="'+(i===xc?'on':'')+'" data-xc="'+i+'">'+esc(k.c||'Community')+'</button>'}).join('')+'</div><div class="tiles">'+c.list.map(function(x){var n=cnt(x.id),h=(x.id.length*47+x.id.charCodeAt(x.id.length-1)*13+x.id.charCodeAt(0)*7)%360;return '<a class="tile'+(x.id===cur?' on':'')+'" href="#c-'+x.id+'" style="--h:'+h+'"><span class="ti">'+esc(x.id.split('-').pop().slice(0,3).toUpperCase())+'</span><b>'+esc(x.id)+'</b>'+(n?'<i>'+n+(n===1?' post':' posts')+'</i>':'')+'</a>'}).join('')+'</div>';
+    }
+    el.innerHTML=o;
+    [].forEach.call(el.querySelectorAll('.on'),function(a){if(a.scrollIntoView)a.scrollIntoView({inline:'center',block:'nearest'})});
+  }
   function render(){
     var h=location.hash,isM=h==='#members',isA=h==='#admin',p=/^#p-/.test(h)?find(h.slice(3)):null,m=/^#c-(.+)/.exec(h);
     if(p)cur=p.channel;else if(m&&chan(m[1]))cur=m[1];
+    if(xcFor!==cur){xcFor=cur;CATS.forEach(function(k,i){if(k.list.some(function(x){return x.id===cur}))xc=i})}
     var ch=chan(cur),o='';
     $('ct').textContent=isA?'Admin panel':isM?'Members and roles':'# '+cur;
     if(av&&(av!=='pw'||user))o=authHtml();
@@ -264,12 +331,13 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
       if(msg)o+='<p class="mut">'+esc(msg)+'</p>';
     }
     if(!av&&form===null){if(ST.lockdown)o='<div class="banner">Posting is temporarily limited to staff.</div>'+o;if(ST.banner)o='<div class="banner">'+inl(ST.banner)+'</div>'+o}
-    $('view').innerHTML=o;side();
+    $('view').innerHTML=o;side();nav2();
   }
   document.addEventListener('click',function(e){
     if(e.target.id==='bd'||e.target.id==='menu'||e.target.closest('a.ch,a.btn')){var s=$('side').classList;if(e.target.id==='menu')s.add('open');else s.remove('open');$('bd').classList.toggle('open',e.target.id==='menu')}
     var t=e.target.closest('button');if(!t)return;var d=t.dataset;
     if(d.cat!==undefined){col[d.cat]=!col[d.cat];side()}
+    if(d.xc!==undefined){xc=+d.xc;nav2()}
     if(d.tab){at=d.tab;msg='';render()}
     if(d.approve){sb.rpc('review_post',{pid:d.approve,approve:true}).then(function(r){msg=r.error?'Could not approve: '+r.error.message:'Post approved.';load();loadMeta()})}
     if(t.hasAttribute('data-ruleadd')){
@@ -284,7 +352,7 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
     if(d.rs){var rs=d.rs.split('|');sb.from('reports').update({status:rs[1],handled_by:user.id}).eq('id',rs[0]).then(function(r){msg=r.error?'Could not update: '+r.error.message:'Report '+rs[1]+'.';loadMeta()})}
     if(d.ban){var bh=$('bd-'+d.ban).value;sb.from('bans').upsert({user_id:d.ban,reason:($('br-'+d.ban).value||'').trim(),until:bh==='perm'?null:new Date(Date.now()+parseInt(bh,10)*3600000).toISOString()}).then(function(r){msg=r.error?'Could not apply: '+r.error.message:'Applied.';loadMeta()})}
     if(d.unban){sb.from('bans').delete().eq('user_id',d.unban).then(function(r){msg=r.error?'Could not lift: '+r.error.message:'Lifted.';loadMeta()})}
-    if(t.hasAttribute('data-savesettings')){sb.from('settings').upsert([{key:'banner',value:$('s-b').value.trim()},{key:'lockdown',value:$('s-l').checked}]).then(function(r){msg=r.error?'Could not save: '+r.error.message:'Settings saved.';loadMeta()})}
+    if(t.hasAttribute('data-savesettings')){sb.from('settings').upsert([{key:'banner',value:$('s-b').value.trim()},{key:'lockdown',value:$('s-l').checked},{key:'approval',value:$('s-a').checked}]).then(function(r){msg=r.error?'Could not save: '+r.error.message:'Settings saved.';loadMeta()})}
     if(t.hasAttribute('data-login')){av='login';msg='';render()}
     if(t.hasAttribute('data-signup')){av='signup';msg='';render()}
     if(t.hasAttribute('data-pw')){av='pw';msg='';render()}
@@ -337,11 +405,16 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%}
   });
   document.addEventListener('input',function(e){if(e.target.id==='mq'){mq=e.target.value;render();var i=$('mq');i.focus();i.setSelectionRange(mq.length,mq.length)}});
   $('q').addEventListener('input',function(){q=this.value;side()});
-  var sel=$('theme'),TH=['green','amber','blue','purple','soft','light'];
+  var sel=$('theme'),TH=['green','amber','blue','purple','soft','light','ocean','forest','lavender','rose','sky','mint','peach','slate','mono','sand'];
   function setTheme(t){if(TH.indexOf(t)<0)t='green';document.documentElement.setAttribute('data-theme',t);sel.value=t}
   var sv='green';try{sv=localStorage.getItem('bs-theme')||'green'}catch(e){}
   setTheme(sv);
   sel.addEventListener('change',function(){setTheme(sel.value);try{localStorage.setItem('bs-theme',sel.value)}catch(e){}});
+  var ks=$('skin'),SK=['classic','xmb','psp','ps4','ps5','vita'];
+  function setSkin(k){if(SK.indexOf(k)<0)k='classic';document.documentElement.setAttribute('data-skin',k);ks.value=k;nav2()}
+  var k0='classic';try{k0=localStorage.getItem('bs-skin')||'classic'}catch(e){}
+  setSkin(k0);
+  ks.addEventListener('change',function(){setSkin(ks.value);try{localStorage.setItem('bs-skin',ks.value)}catch(e){}});
   window.addEventListener('hashchange',function(){form=null;if(av!=='pw')av=null;msg='';render();$('view').scrollTop=0});
   render();load();
   if(sb){
